@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ReviewProvider } from "@/contexts/ReviewContext";
+import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -16,6 +18,22 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <SidebarInset className="flex-1">
+          <header className="h-14 flex items-center border-b bg-background px-4">
+            <SidebarTrigger />
+          </header>
+          {children}
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ReviewProvider>
@@ -27,12 +45,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/reviews" element={<Reviews />} />
+            <Route path="/dashboard" element={<AppWithSidebar><Dashboard /></AppWithSidebar>} />
+            <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
+            <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
+            <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
             <Route path="/review/:businessPath" element={<ReviewForm />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
