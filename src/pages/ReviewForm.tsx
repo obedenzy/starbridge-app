@@ -157,6 +157,26 @@ const ReviewForm = () => {
     );
   }
 
+  // Check if business is active
+  if (business.status !== 'active') {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Star className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-xl font-semibold mb-2">Reviews Temporarily Unavailable</h2>
+            <p className="text-muted-foreground mb-4">
+              {business.business_name} is currently not accepting reviews.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Please check back later or contact the business directly.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (isSubmitted) {
     return (
       <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
