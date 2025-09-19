@@ -353,16 +353,23 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
   const signup = async (email: string, password: string, businessName: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          business_name: businessName
+          business_name: businessName,
+          full_name: ''
         }
       }
     });
+
+    // If no error but no user was created, it means the user already exists
+    if (!error && !data.user) {
+      return { error: new Error('An account with this email already exists. Please sign in instead.') as any };
+    }
+
     return { error };
   };
 
