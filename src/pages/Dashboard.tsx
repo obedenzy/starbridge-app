@@ -27,18 +27,21 @@ interface Analytics {
 
 const Dashboard = () => {
   // ALL HOOKS MUST BE CALLED FIRST - NO CONDITIONAL LOGIC BEFORE HOOKS
-  const { user, userRole, getAnalytics, businessSettings, profile, checkSubscription } = useReview();
+  const { user, userRole, getAnalytics, businessSettings, profile, refreshSubscriptionStatus } = useReview();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Auto-refresh subscription status
+  // Auto-refresh subscription status every 3 minutes
   useEffect(() => {
+    if (!user) return;
+    
     const refreshInterval = setInterval(() => {
-      checkSubscription();
-    }, 60000); // Refresh every minute
+      console.log('Auto-refreshing subscription status (Dashboard)...');
+      refreshSubscriptionStatus();
+    }, 3 * 60 * 1000); // Refresh every 3 minutes
 
     return () => clearInterval(refreshInterval);
-  }, [checkSubscription]);
+  }, [user, refreshSubscriptionStatus]);
 
   // useEffect hook must be called before any conditional returns
   useEffect(() => {

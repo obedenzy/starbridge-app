@@ -27,21 +27,24 @@ const Billing = () => {
     userRole, 
     createCheckout, 
     openCustomerPortal,
-    checkSubscription,
+    refreshSubscriptionStatus,
     getInvoices
   } = useReview();
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
 
-  // Auto-refresh subscription status
+  // Auto-refresh subscription status every 2 minutes
   useEffect(() => {
+    if (!user) return;
+    
     const refreshInterval = setInterval(() => {
-      checkSubscription();
-    }, 60000); // Refresh every minute
+      console.log('Auto-refreshing subscription status (Billing page)...');
+      refreshSubscriptionStatus();
+    }, 2 * 60 * 1000); // Refresh every 2 minutes
 
     return () => clearInterval(refreshInterval);
-  }, [checkSubscription]);
+  }, [user, refreshSubscriptionStatus]);
 
   // Load invoices
   useEffect(() => {
@@ -74,19 +77,7 @@ const Billing = () => {
   }
 
   const handleRefreshSubscription = async () => {
-    try {
-      await checkSubscription();
-      toast({
-        title: "Subscription Status Updated",
-        description: "Your subscription status has been refreshed.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to refresh subscription status. Please try again.",
-        variant: "destructive",
-      });
-    }
+    await refreshSubscriptionStatus();
   };
 
 

@@ -74,6 +74,7 @@ interface ReviewContextType {
   // Business user management
   getUserBusinessRole: () => Promise<'business_admin' | 'business_user' | null>;
   getBusinessUsers: () => Promise<any[]>;
+  refreshSubscriptionStatus: () => Promise<void>;
   createBusinessUser: (email: string, fullName: string, role: 'business_admin' | 'business_user') => Promise<any>;
   removeUserFromBusiness: (userId: string) => Promise<void>;
   updateBusinessUserRole: (userId: string, role: 'business_admin' | 'business_user') => Promise<void>;
@@ -294,6 +295,39 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       const defaultStatus = { subscribed: false, product_id: null, subscription_end: null };
       setSubscriptionStatus(defaultStatus);
       return defaultStatus;
+    }
+  };
+
+  const refreshSubscriptionStatus = async () => {
+    if (!session || !user) return;
+    
+    try {
+      console.log('Manually refreshing subscription status...');
+      await checkSubscription();
+      
+      // Also refresh business settings to get latest data
+      const { data: updatedBusinessData } = await supabase
+        .from('business_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (updatedBusinessData) {
+        setBusinessSettings(updatedBusinessData);
+        console.log('Business settings refreshed:', updatedBusinessData);
+      }
+      
+      toast({
+        title: "Success",
+        description: "Subscription status refreshed!",
+      });
+    } catch (error) {
+      console.error('Error refreshing subscription status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh subscription status.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -573,6 +607,33 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       throw error;
     }
   };
+
+  // Auto-refresh subscription status every 5 minutes
+  useEffect(() => {
+    if (!session || !businessSettings) return;
+
+    const intervalId = setInterval(async () => {
+      console.log('Auto-refreshing subscription status...');
+      try {
+        await checkSubscription();
+        
+        // Also refresh business settings to get latest data
+        const { data: updatedBusinessData } = await supabase
+          .from('business_settings')
+          .select('*')
+          .eq('user_id', user?.id)
+          .single();
+          
+        if (updatedBusinessData) {
+          setBusinessSettings(updatedBusinessData);
+        }
+      } catch (error) {
+        console.error('Error auto-refreshing subscription:', error);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(intervalId);
+  }, [session, businessSettings, user?.id]);
 
   // Check if user needs to change password
   const requiresPasswordChange = () => {
@@ -935,8 +996,9 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       getBusinessByAccountId,
       getReviewsByBusiness,
       changePassword,
-      checkSubscription,
-      createCheckout,
+       checkSubscription,
+       refreshSubscriptionStatus,
+       createCheckout,
       openCustomerPortal,
        getInvoices,
        getAnalytics,
