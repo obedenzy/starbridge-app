@@ -23,6 +23,7 @@ export interface BusinessSettings {
   review_threshold: number;
   public_path: string;
   status?: string;
+  thank_you_message?: string;
 }
 
 export interface Profile {
