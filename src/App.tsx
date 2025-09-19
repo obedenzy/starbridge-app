@@ -29,12 +29,16 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
   const { userRole } = useReview();
   const location = useLocation();
   
+  // Debug logging
+  console.log('AppWithSidebar - userRole:', userRole, 'pathname:', location.pathname);
+  
   // Always call hooks first before any conditional returns
   const sidebarComponent = userRole === 'super_admin' ? <SuperAdminSidebar /> : <AppSidebar />;
   
   // Handle redirects after all hooks are called
   if (userRole === 'super_admin') {
     if (location.pathname === '/dashboard') {
+      console.log('Redirecting super admin from /dashboard to /super-admin/dashboard');
       return <Navigate to="/super-admin/dashboard" replace />;
     }
     if (location.pathname === '/profile') {
@@ -51,6 +55,7 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
   // Redirect regular users from super admin routes to regular routes
   if (userRole === 'business_user') {
     if (location.pathname.startsWith('/super-admin/')) {
+      console.log('Redirecting business user from super admin routes to /dashboard');
       return <Navigate to="/dashboard" replace />;
     }
   }

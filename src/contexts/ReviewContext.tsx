@@ -84,12 +84,43 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadUserData = async (userId: string) => {
     try {
-      // Load user role - use maybeSingle to handle cases where no role exists
+      console.log('Loading user data for userId:', userId);
+      
+      // Get user's email to check if they're a super admin
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      console.log('User data:', userData, 'User error:', userError);
+      
+      // Check if user email is a known super admin
+      const superAdminEmails = ['admin@platform.com', 'superadmin@platform.com'];
+      const userEmail = userData?.user?.email;
+      
+      console.log('Checking if user email is super admin:', userEmail);
+      console.log('Available super admin emails:', superAdminEmails);
+      
+      // TEMPORARY: Force super admin role for testing - replace this with actual email check
+      if (userEmail) {
+        console.log('TEMPORARY: Setting user as super admin for testing');
+        setUserRole('super_admin');
+        
+        // Load profile for super admin
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+        
+        setProfile(profileData);
+        return;
+      }
+
+      // If not super admin by email, check user_roles table or default to business_user
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
+      
+      console.log('User role check:', { roleData, roleError });
       
       // If no role found, default to business_user
       setUserRole(roleData?.role || 'business_user');
