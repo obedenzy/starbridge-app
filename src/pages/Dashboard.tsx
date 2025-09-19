@@ -3,9 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatsCard } from '@/components/ui/stats-card';
 import { StarRating } from '@/components/StarRating';
-import { Input } from '@/components/ui/input';
 import { useReview } from '@/contexts/ReviewContext';
-import { useToast } from '@/hooks/use-toast';
 import { 
   BarChart3, 
   Star, 
@@ -15,22 +13,17 @@ import {
   Settings,
   UserCircle,
   Eye,
-  LogOut,
-  Copy,
-  ExternalLink
+  LogOut
 } from 'lucide-react';
 
 const Dashboard = () => {
   const { user, logout, getAnalytics, businessSettings } = useReview();
-  const { toast } = useToast();
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
   const analytics = getAnalytics();
-  
-  const reviewUrl = `${window.location.origin}/review/${user.businessAccountId}`;
 
   return (
     <div className="p-6 space-y-6">
@@ -68,49 +61,6 @@ const Dashboard = () => {
             icon={<Users className="w-6 h-6" />}
           />
         </div>
-
-        {/* Review Form URL Section */}
-        <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <ExternalLink className="w-5 h-5 text-accent" />
-              <span>Public Review Form</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Share this URL with customers to collect reviews. This form can be accessed by anyone without logging in.
-              </p>
-              <div className="flex space-x-2">
-                <Input
-                  value={reviewUrl}
-                  readOnly
-                  className="font-mono text-sm bg-muted/50"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    navigator.clipboard.writeText(reviewUrl);
-                    toast({
-                      title: "URL copied",
-                      description: "Review form URL has been copied to clipboard.",
-                    });
-                  }}
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy
-                </Button>
-                <Button asChild variant="outline">
-                  <Link to={`/review/${user.businessAccountId}`} target="_blank">
-                    <Eye className="w-4 h-4 mr-2" />
-                    Preview
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Rating Distribution */}
@@ -216,7 +166,7 @@ const Dashboard = () => {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="h-20">
-                  <Link to={reviewUrl} target="_blank" className="flex flex-col items-center space-y-2">
+                  <Link to={`/review/${user.businessAccountId}`} target="_blank" className="flex flex-col items-center space-y-2">
                     <Eye className="w-6 h-6" />
                     <span>Preview Form</span>
                   </Link>
