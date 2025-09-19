@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { 
   BarChart3, 
@@ -36,13 +37,22 @@ export function SuperAdminSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { user, logout, profile } = useReview();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
   const collapsed = state === "collapsed";
 
   const handleLogout = async () => {
-    await logout();
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   if (!user) return null;
@@ -95,9 +105,12 @@ export function SuperAdminSidebar() {
       <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout}>
+            <SidebarMenuButton 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
               <LogOut className="w-4 h-4" />
-              {!collapsed && <span>Logout</span>}
+              {!collapsed && <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
