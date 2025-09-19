@@ -21,9 +21,14 @@ export type Database = {
           created_at: string
           google_review_url: string | null
           id: string
+          payment_failed_at: string | null
           public_path: string | null
           review_threshold: number
           status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_end_date: string | null
+          subscription_status: string | null
           updated_at: string
           user_id: string
         }
@@ -33,9 +38,14 @@ export type Database = {
           created_at?: string
           google_review_url?: string | null
           id?: string
+          payment_failed_at?: string | null
           public_path?: string | null
           review_threshold?: number
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id: string
         }
@@ -45,9 +55,14 @@ export type Database = {
           created_at?: string
           google_review_url?: string | null
           id?: string
+          payment_failed_at?: string | null
           public_path?: string | null
           review_threshold?: number
           status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          subscription_status?: string | null
           updated_at?: string
           user_id?: string
         }
