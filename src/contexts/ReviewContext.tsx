@@ -224,6 +224,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const createCheckout = async () => {
+    console.log('createCheckout called - session:', !!session, 'user:', !!user);
+    
     if (!session) {
       console.error('No session found - please log in first');
       alert('Please log in to subscribe');
@@ -236,7 +238,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
-    console.log('Creating checkout session...');
+    console.log('Creating checkout session...', { userEmail: user.email, hasToken: !!session.access_token });
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {

@@ -67,14 +67,8 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
     const exemptRoutes = ['/subscription-required', '/subscription-success', '/billing'];
     const isExemptRoute = exemptRoutes.includes(location.pathname);
     
-    // Check subscription for business users trying to access protected routes
-    if (!isExemptRoute && subscriptionStatus !== null) {
-      // Only redirect if subscription status is loaded and user is definitely not subscribed
-      if (!subscriptionStatus.subscribed) {
-        console.log('Business user without active subscription, redirecting to subscription prompt');
-        return <Navigate to="/subscription-required" replace />;
-      }
-    }
+    // Allow access to dashboard and other routes regardless of subscription status
+    // Users can access dashboard without subscription and manage billing from there
   }
   
   return (
