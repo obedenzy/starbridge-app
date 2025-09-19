@@ -46,6 +46,7 @@ interface ReviewContextType {
     product_id: string | null;
     subscription_end: string | null;
   } | null;
+  redirectPath: string | null;
   login: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signup: (email: string, password: string, businessName: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
@@ -94,6 +95,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     product_id: string | null;
     subscription_end: string | null;
   } | null>(null);
+  const [redirectPath, setRedirectPath] = useState<string | null>(null);
 
   const loadUserData = async (userId: string) => {
     try {
@@ -170,6 +172,18 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
           .order('created_at', { ascending: false });
         
         setReviews(reviewsData || []);
+
+        // Determine redirect path based on business status and reviews
+        if (businessData.status === 'inactive' && (!roleData || roleData.role === 'business_user')) {
+          const reviewCount = reviewsData?.length || 0;
+          if (reviewCount === 0) {
+            setRedirectPath('/subscription-required');
+          } else {
+            setRedirectPath('/billing');
+          }
+        } else {
+          setRedirectPath(null);
+        }
       }
 
       // Check subscription status for business users (not super admin)
@@ -631,6 +645,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       reviews,
       userRole,
       subscriptionStatus,
+      redirectPath,
       login,
       signup,
       logout,

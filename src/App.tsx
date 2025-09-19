@@ -30,7 +30,7 @@ import { Navigate, useLocation } from "react-router-dom";
 const queryClient = new QueryClient();
 
 const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
-  const { userRole, subscriptionStatus } = useReview();
+  const { userRole, subscriptionStatus, redirectPath } = useReview();
   const location = useLocation();
   
   // Debug logging
@@ -67,13 +67,10 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
     const exemptRoutes = ['/subscription-required', '/subscription-success', '/billing'];
     const isExemptRoute = exemptRoutes.includes(location.pathname);
     
-    // Check subscription for business users trying to access protected routes
-    if (!isExemptRoute && subscriptionStatus !== null) {
-      // Only redirect if subscription status is loaded and user is definitely not subscribed
-      if (!subscriptionStatus.subscribed) {
-        console.log('Business user without active subscription, redirecting to subscription prompt');
-        return <Navigate to="/subscription-required" replace />;
-      }
+    // Handle redirects based on business status and reviews
+    if (!isExemptRoute && redirectPath && location.pathname !== redirectPath) {
+      console.log('Redirecting based on business status and reviews:', redirectPath);
+      return <Navigate to={redirectPath} replace />;
     }
   }
   
