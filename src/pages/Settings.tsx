@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useReview } from '@/contexts/ReviewContext';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, Save, Building, Mail, User as UserIcon, Copy } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Building, Mail, User as UserIcon, Copy, Eye } from 'lucide-react';
 
 const Settings = () => {
   const { user, businessSettings, updateBusinessSettings } = useReview();
@@ -147,10 +147,11 @@ const Settings = () => {
                 <Input
                   value={`${window.location.origin}/review/${user.businessAccountId}`}
                   readOnly
-                  className="font-mono text-xs bg-muted/50"
+                  className="font-mono text-sm bg-muted/50"
                 />
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/review/${user.businessAccountId}`);
                     toast({
@@ -159,7 +160,14 @@ const Settings = () => {
                     });
                   }}
                 >
+                  <Copy className="w-4 h-4 mr-2" />
                   Copy URL
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/review/${user.businessAccountId}`} target="_blank">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Preview
+                  </Link>
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
