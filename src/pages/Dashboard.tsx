@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatsCard } from '@/components/ui/stats-card';
 import { StarRating } from '@/components/StarRating';
+import { SubscriptionStatus } from '@/components/SubscriptionStatus';
 import { useReview } from '@/contexts/ReviewContext';
 import { 
   BarChart3, 
@@ -84,6 +85,8 @@ const Dashboard = () => {
             Here's an overview of your review performance and recent activity.
           </p>
         </div>
+
+        <SubscriptionStatus />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

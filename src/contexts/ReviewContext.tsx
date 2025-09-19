@@ -41,6 +41,11 @@ interface ReviewContextType {
   profile: Profile | null;
   reviews: Review[];
   userRole: 'super_admin' | 'business_user' | null;
+  subscriptionStatus: {
+    subscribed: boolean;
+    product_id: string | null;
+    subscription_end: string | null;
+  } | null;
   login: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signup: (email: string, password: string, businessName: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
@@ -50,6 +55,9 @@ interface ReviewContextType {
   getBusinessByAccountId: (accountId: string) => Promise<BusinessSettings | null>;
   getReviewsByBusiness: (businessId: string) => Promise<Review[]>;
   changePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
+  checkSubscription: () => Promise<void>;
+  createCheckout: () => Promise<void>;
+  openCustomerPortal: () => Promise<void>;
   getAnalytics: () => Promise<{
     totalReviews: number;
     averageRating: number;
@@ -81,6 +89,11 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [userRole, setUserRole] = useState<'super_admin' | 'business_user' | null>(null);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<{
+    subscribed: boolean;
+    product_id: string | null;
+    subscription_end: string | null;
+  } | null>(null);
 
   const loadUserData = async (userId: string) => {
     try {
@@ -158,8 +171,100 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         
         setReviews(reviewsData || []);
       }
+
+      // Check subscription status for business users
+      if (userRole !== 'super_admin') {
+        await checkSubscription();
+      }
     } catch (error) {
       console.error('Error loading user data:', error);
+    }
+  };
+
+  const checkSubscription = async () => {
+    if (!session) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Error checking subscription:', error);
+        setSubscriptionStatus({ subscribed: false, product_id: null, subscription_end: null });
+        return;
+      }
+
+      setSubscriptionStatus(data);
+      
+      // Update business settings status based on subscription
+      if (businessSettings && data.subscribed !== (businessSettings.status === 'active')) {
+        const { error: updateError } = await supabase
+          .from('business_settings')
+          .update({ status: data.subscribed ? 'active' : 'inactive' })
+          .eq('user_id', user?.id);
+        
+        if (!updateError) {
+          setBusinessSettings(prev => prev ? { ...prev, status: data.subscribed ? 'active' : 'inactive' } : null);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+      setSubscriptionStatus({ subscribed: false, product_id: null, subscription_end: null });
+    }
+  };
+
+  const createCheckout = async () => {
+    if (!session) {
+      console.error('No session found');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Error creating checkout:', error);
+        return;
+      }
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error creating checkout:', error);
+    }
+  };
+
+  const openCustomerPortal = async () => {
+    if (!session) {
+      console.error('No session found');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.functions.invoke('customer-portal', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (error) {
+        console.error('Error opening customer portal:', error);
+        return;
+      }
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error opening customer portal:', error);
     }
   };
 
@@ -229,6 +334,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     setProfile(null);
     setReviews([]);
     setUserRole(null);
+    setSubscriptionStatus(null);
     // Redirect to login page after logout
     window.location.href = '/login';
   };
@@ -480,6 +586,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       profile,
       reviews,
       userRole,
+      subscriptionStatus,
       login,
       signup,
       logout,
@@ -489,6 +596,9 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       getBusinessByAccountId,
       getReviewsByBusiness,
       changePassword,
+      checkSubscription,
+      createCheckout,
+      openCustomerPortal,
       getAnalytics,
       getAllBusinessAccounts,
       getAllUsers,
