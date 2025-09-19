@@ -96,7 +96,25 @@ serve(async (req) => {
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       subscriptionId = subscription.id;
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      
+      // Safely handle timestamp conversion with validation
+      if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
+        try {
+          subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        } catch (dateError) {
+          logStep("Error converting timestamp", { 
+            timestamp: subscription.current_period_end,
+            error: dateError.message 
+          });
+          subscriptionEnd = null;
+        }
+      } else {
+        logStep("Invalid or missing current_period_end", { 
+          current_period_end: subscription.current_period_end 
+        });
+        subscriptionEnd = null;
+      }
+      
       subscriptionStatus = subscription.status;
       
       logStep("Active subscription found", { 
