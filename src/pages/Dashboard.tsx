@@ -231,6 +231,12 @@ const Dashboard = () => {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="h-20">
+                  <Link to="/users" className="flex flex-col items-center space-y-2">
+                    <Users className="w-6 h-6" />
+                    <span>Manage Users</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-20">
                   <Link to={`/review?businessAccountId=${user?.id}`} target="_blank" className="flex flex-col items-center space-y-2">
                     <Eye className="w-6 h-6" />
                     <span>Preview Form</span>

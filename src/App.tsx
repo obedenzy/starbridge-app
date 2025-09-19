@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import ReviewForm from "./pages/ReviewForm";
 import Reviews from "./pages/Reviews";
+import Users from "./pages/Users";
 import Billing from "./pages/Billing";
 import CreateSuperAdmin from "./pages/CreateSuperAdmin";
 import NotFound from "./pages/NotFound";
@@ -104,6 +105,7 @@ const App = () => (
             <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
             <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
+            <Route path="/users" element={<AppWithSidebar><Users /></AppWithSidebar>} />
             <Route path="/billing" element={<AppWithSidebar><Billing /></AppWithSidebar>} />
             
             {/* Super Admin Routes */}

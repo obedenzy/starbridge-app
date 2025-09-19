@@ -8,7 +8,8 @@ import {
   User,
   Home,
   LogOut,
-  CreditCard
+  CreditCard,
+  Users
 } from "lucide-react";
 
 import {
@@ -26,25 +27,29 @@ import {
 } from "@/components/ui/sidebar";
 import { useReview } from "@/contexts/ReviewContext";
 
-const menuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
-  { title: "Reviews", url: "/reviews", icon: MessageSquare },
-  { title: "Billing", url: "/billing", icon: CreditCard },
-  { title: "Business Settings", url: "/settings", icon: Settings },
-  { title: "Profile", url: "/profile", icon: User },
-];
-
 export function AppSidebar() {
   // Always call all hooks first
   const { state } = useSidebar();
   const location = useLocation();
-  const { user, logout, businessSettings, profile } = useReview();
+  const { user, logout, businessSettings, profile, businessRole } = useReview();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Calculate derived values after hooks
   const currentPath = location.pathname;
   const isActive = (path: string) => currentPath === path;
   const collapsed = state === "collapsed";
+
+  // Dynamic menu items based on business role
+  const menuItems = [
+    { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
+    { title: "Reviews", url: "/reviews", icon: MessageSquare },
+    ...(businessRole === 'business_admin' ? [
+      { title: "Users", url: "/users", icon: Users }
+    ] : []),
+    { title: "Billing", url: "/billing", icon: CreditCard },
+    { title: "Business Settings", url: "/settings", icon: Settings },
+    { title: "Profile", url: "/profile", icon: User },
+  ];
 
   const handleLogout = async () => {
     if (isLoggingOut) return;

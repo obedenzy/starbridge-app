@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { User, Session, AuthError } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 // Types
 export interface Review {
@@ -58,18 +59,26 @@ interface ReviewContextType {
   getBusinessByAccountId: (accountId: string) => Promise<BusinessSettings | null>;
   getReviewsByBusiness: (businessId: string) => Promise<Review[]>;
   changePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
-   checkSubscription: () => Promise<{ subscribed: boolean; product_id?: string | null; subscription_end?: string | null } | null>;
-   createCheckout: () => Promise<void>;
-   openCustomerPortal: () => Promise<void>;
-   getInvoices: () => Promise<any[]>;
-   getAnalytics: () => Promise<{
-     totalReviews: number;
-     averageRating: number;
-     ratingDistribution: { rating: number; count: number }[];
-     recentReviews: Review[];
-   }>;
-   // Super admin functions
-   getAllBusinessAccounts: () => Promise<BusinessSettings[]>;
+  checkSubscription: () => Promise<{ subscribed: boolean; product_id?: string | null; subscription_end?: string | null } | null>;
+  createCheckout: () => Promise<void>;
+  openCustomerPortal: () => Promise<void>;
+  getInvoices: () => Promise<any[]>;
+  getAnalytics: () => Promise<{
+    totalReviews: number;
+    averageRating: number;
+    ratingDistribution: { rating: number; count: number }[];
+    recentReviews: Review[];
+  }>;
+  businessRole: 'business_admin' | 'business_user' | null;
+  // Business user management
+  getUserBusinessRole: () => Promise<'business_admin' | 'business_user' | null>;
+  getBusinessUsers: () => Promise<any[]>;
+  inviteUserToBusiness: (email: string, role: 'business_admin' | 'business_user') => Promise<void>;
+  removeUserFromBusiness: (userId: string) => Promise<void>;
+  updateBusinessUserRole: (userId: string, role: 'business_admin' | 'business_user') => Promise<void>;
+  changeUserPassword: (userId: string, newPassword: string) => Promise<void>;
+  // Super admin functions
+  getAllBusinessAccounts: () => Promise<BusinessSettings[]>;
   getAllUsers: () => Promise<Profile[]>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<{ error: AuthError | null }>;
   updateBusinessStatus: (businessId: string, status: string) => Promise<void>;
@@ -87,12 +96,14 @@ interface ReviewContextType {
 const ReviewContext = createContext<ReviewContextType | undefined>(undefined);
 
 export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
+  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [userRole, setUserRole] = useState<'super_admin' | 'business_user' | null>(null);
+  const [businessRole, setBusinessRole] = useState<'business_admin' | 'business_user' | null>(null);
   const [subscriptionStatus, setSubscriptionStatus] = useState<{
     subscribed: boolean;
     product_id: string | null;
@@ -141,7 +152,12 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       console.log('User role check:', { roleData, roleError });
       
       // If no role found, default to business_user
-      setUserRole(roleData?.role || 'business_user');
+      const role = roleData?.role;
+      if (role === 'business_admin') {
+        setUserRole('business_user'); // business_admin is handled separately via businessRole
+      } else {
+        setUserRole(role || 'business_user');
+      }
 
       // Load profile
       const { data: profileData } = await supabase
@@ -373,6 +389,181 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error: any) {
       console.error('Get invoices error:', error);
       return [];
+    }
+  };
+
+  // Business user management functions
+  const getUserBusinessRole = async (): Promise<'business_admin' | 'business_user' | null> => {
+    if (!user || !businessSettings) return null;
+    
+    try {
+      const { data, error } = await supabase.rpc('get_user_business_role', {
+        user_id_param: user.id,
+        business_id_param: businessSettings.id
+      });
+      
+      if (error) throw error;
+      const role = data as 'business_admin' | 'business_user';
+      setBusinessRole(role);
+      return role;
+    } catch (error) {
+      console.error('Error getting user business role:', error);
+      setBusinessRole(null);
+      return null;
+    }
+  };
+
+  const getBusinessUsers = async () => {
+    if (!businessSettings) return [];
+    
+    try {
+      // Get business users
+      const { data: businessUsers, error: businessUsersError } = await supabase
+        .from('business_users')
+        .select(`
+          *,
+          profiles:user_id (
+            full_name,
+            email
+          )
+        `)
+        .eq('business_id', businessSettings.id);
+      
+      if (businessUsersError) throw businessUsersError;
+
+      // Get business owner info
+      const { data: ownerProfile, error: ownerError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', businessSettings.user_id)
+        .single();
+      
+      if (ownerError && ownerError.code !== 'PGRST116') throw ownerError;
+
+      // Combine owner and business users
+      const allUsers = [
+        ...(ownerProfile ? [{
+          id: businessSettings.user_id,
+          business_id: businessSettings.id,
+          user_id: businessSettings.user_id,
+          role: 'business_admin' as const,
+          created_at: new Date().toISOString(),
+          profiles: ownerProfile,
+          is_owner: true
+        }] : []),
+        ...(businessUsers || []).map(user => ({ 
+          ...user, 
+          is_owner: false 
+        }))
+      ];
+
+      return allUsers;
+    } catch (error) {
+      console.error('Error getting business users:', error);
+      return [];
+    }
+  };
+
+  const inviteUserToBusiness = async (email: string, role: 'business_admin' | 'business_user') => {
+    if (!businessSettings) throw new Error('No business settings found');
+    
+    try {
+      const { error } = await supabase.rpc('invite_user_to_business', {
+        business_id_param: businessSettings.id,
+        email_param: email,
+        role_param: role
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "User invited successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error inviting user:', error);
+      toast({
+        title: "Error", 
+        description: error.message || "Failed to invite user.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const removeUserFromBusiness = async (userId: string) => {
+    if (!businessSettings) throw new Error('No business settings found');
+    
+    try {
+      const { error } = await supabase.rpc('remove_user_from_business', {
+        business_id_param: businessSettings.id,
+        user_id_param: userId
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "User removed successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error removing user:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove user.",
+        variant: "destructive", 
+      });
+      throw error;
+    }
+  };
+
+  const updateBusinessUserRole = async (userId: string, role: 'business_admin' | 'business_user') => {
+    if (!businessSettings) throw new Error('No business settings found');
+    
+    try {
+      const { error } = await supabase.rpc('update_business_user_role', {
+        business_id_param: businessSettings.id,
+        user_id_param: userId,
+        new_role_param: role
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "User role updated successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error updating user role:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user role.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  const changeUserPassword = async (userId: string, newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.admin.updateUserById(userId, {
+        password: newPassword
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "User password updated successfully.",
+      });
+    } catch (error: any) {
+      console.error('Error updating user password:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user password.",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -719,6 +910,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       profile,
       reviews,
       userRole,
+      businessRole,
       subscriptionStatus,
       redirectPath,
       login,
@@ -733,8 +925,16 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       checkSubscription,
       createCheckout,
       openCustomerPortal,
-      getInvoices,
-      getAnalytics,
+       getInvoices,
+       getAnalytics,
+       // Business user management
+       getUserBusinessRole,
+       getBusinessUsers,
+       inviteUserToBusiness,
+       removeUserFromBusiness,
+       updateBusinessUserRole,
+       changeUserPassword,
+      // Super admin functions
       getAllBusinessAccounts,
       getAllUsers,
       updateUserPassword,
