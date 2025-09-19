@@ -27,7 +27,7 @@ import { useReview } from "@/contexts/ReviewContext";
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Reviews", url: "/reviews", icon: MessageSquare },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Business Settings", url: "/settings", icon: Settings },
   { title: "Profile", url: "/profile", icon: User },
 ];
 

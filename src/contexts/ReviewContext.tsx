@@ -27,6 +27,7 @@ export interface User {
   id: string;
   email: string;
   businessName: string;
+  businessAccountId: string;
   createdAt: string;
 }
 
@@ -95,8 +96,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     
     const userData = users[email];
     if (userData && userData.password === password) {
-      setUser({ id: userData.id, email, businessName: userData.businessName, createdAt: userData.createdAt });
-      localStorage.setItem('reviewApp_user', JSON.stringify({ id: userData.id, email, businessName: userData.businessName, createdAt: userData.createdAt }));
+      setUser({ id: userData.id, email, businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt });
+      localStorage.setItem('reviewApp_user', JSON.stringify({ id: userData.id, email, businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt }));
       
       // Load business settings
       const savedSettings = localStorage.getItem('reviewApp_businessSettings');
@@ -121,6 +122,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     const userId = crypto.randomUUID();
+    const businessAccountId = crypto.randomUUID();
     const now = new Date().toISOString();
     
     users[email] = {
@@ -128,6 +130,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       password,
       businessName,
+      businessAccountId,
       createdAt: now
     };
     
@@ -149,9 +152,9 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     allSettings[userId] = defaultSettings;
     localStorage.setItem('reviewApp_businessSettings', JSON.stringify(allSettings));
     
-    setUser({ id: userId, email, businessName, createdAt: now });
+    setUser({ id: userId, email, businessName, businessAccountId, createdAt: now });
     setBusinessSettings(defaultSettings);
-    localStorage.setItem('reviewApp_user', JSON.stringify({ id: userId, email, businessName, createdAt: now }));
+    localStorage.setItem('reviewApp_user', JSON.stringify({ id: userId, email, businessName, businessAccountId, createdAt: now }));
     
     return true;
   };
@@ -198,7 +201,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     
     const allSettings = JSON.parse(savedSettings);
     return Object.values(allSettings).find((settings: any) => 
-      settings.businessName.toLowerCase().replace(/\s+/g, '-') === path
+      settings.businessName.toLowerCase().replace(/\s+/g, '-') === path.toLowerCase()
     ) as BusinessSettings || null;
   };
 
