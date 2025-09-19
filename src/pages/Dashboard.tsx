@@ -30,49 +30,7 @@ const Dashboard = () => {
     : '#';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Header */}
-      <header className="border-b border-border/50 bg-card/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-primary p-2 rounded-lg">
-                <Star className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">ReviewFlow</h1>
-                <p className="text-sm text-muted-foreground">{user.businessName}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" asChild>
-                <Link to={reviewUrl} target="_blank">
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/profile">
-                  <UserCircle className="w-4 h-4 mr-2" />
-                  Profile
-                </Link>
-              </Button>
-              <Button variant="outline" asChild>
-                <Link to="/settings">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Link>
-              </Button>
-              <Button variant="ghost" onClick={logout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
+    <div className="p-6 space-y-6">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-foreground mb-2">
             Welcome back, {user.businessName}!
@@ -221,7 +179,6 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
     </div>
   );
 };

@@ -30,16 +30,15 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30">
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="flex items-center space-x-4 mb-8">
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/dashboard">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Link>
-          </Button>
-        </div>
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Profile</h1>
+        <p className="text-muted-foreground">
+          Manage your profile information and account settings.
+        </p>
+      </div>
+
+      <div className="max-w-4xl">{/* Changed from mx-auto to container */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Information */}
