@@ -26,19 +26,12 @@ interface Analytics {
 }
 
 const Dashboard = () => {
+  // ALL HOOKS MUST BE CALLED FIRST - NO CONDITIONAL LOGIC BEFORE HOOKS
   const { user, userRole, getAnalytics, businessSettings, profile } = useReview();
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Redirect super admin to their dashboard
-  if (userRole === 'super_admin') {
-    return <Navigate to="/super-admin/dashboard" replace />;
-  }
-
+  // useEffect hook must be called before any conditional returns
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
@@ -57,6 +50,16 @@ const Dashboard = () => {
       setLoading(false);
     }
   }, [getAnalytics, businessSettings]);
+
+  // CONDITIONAL LOGIC AFTER ALL HOOKS ARE CALLED
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirect super admin to their dashboard
+  if (userRole === 'super_admin') {
+    return <Navigate to="/super-admin/dashboard" replace />;
+  }
 
   if (loading) {
     return (
