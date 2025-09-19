@@ -120,10 +120,15 @@ const Billing = () => {
               </Badge>
             </div>
             
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Price</span>
-              <span className="text-sm font-semibold">$250/month</span>
-            </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium">Price</span>
+            <span className="text-sm font-semibold">
+              {businessSettings?.custom_subscription_amount 
+                ? `$${(businessSettings.custom_subscription_amount / 100).toFixed(2)}/month`
+                : '$250/month'
+              }
+            </span>
+          </div>
 
             {subscriptionStatus?.subscribed && subscriptionStatus?.subscription_end && (
               <div className="flex items-center justify-between">

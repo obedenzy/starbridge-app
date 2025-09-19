@@ -24,6 +24,7 @@ export interface BusinessSettings {
   public_path: string;
   status?: string;
   thank_you_message?: string;
+  custom_subscription_amount?: number;
 }
 
 export interface Profile {
@@ -325,10 +326,12 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
   const openCustomerPortal = async () => {
     if (!session) {
       console.error('No session found');
+      alert('Please log in to manage your subscription.');
       return;
     }
 
     try {
+      console.log('Opening customer portal...');
       const { data, error } = await supabase.functions.invoke('customer-portal', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -337,14 +340,20 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error('Error opening customer portal:', error);
+        alert(`Error: ${error.message || 'Failed to open customer portal'}`);
         return;
       }
 
       if (data?.url) {
+        console.log('Opening customer portal URL:', data.url);
         window.open(data.url, '_blank');
+      } else {
+        console.error('No portal URL received');
+        alert('Failed to get customer portal URL. Please try again.');
       }
     } catch (error) {
       console.error('Error opening customer portal:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     }
   };
 

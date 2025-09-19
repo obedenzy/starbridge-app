@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SuperAdminSubscriptionManager } from "@/components/SuperAdminSubscriptionManager";
 import { 
   Table,
   TableBody,
@@ -146,33 +148,11 @@ export default function SuperAdminBusinesses() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             <Building2 className="w-8 h-8" />
-            Business Accounts
+            Business Management
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage all business accounts on the platform
+            Manage all business accounts and subscriptions on the platform
           </p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-            <Input
-              placeholder="Search businesses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -208,92 +188,129 @@ export default function SuperAdminBusinesses() {
         </Card>
       </div>
 
-      {/* Business Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Business Accounts</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Business Name</TableHead>
-                <TableHead>Contact Email</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created Date</TableHead>
-                <TableHead>Review Threshold</TableHead>
-                <TableHead>Public Path</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBusinesses.map((business) => (
-                <TableRow key={business.id}>
-                  <TableCell className="font-medium">
-                    {business.business_name}
-                  </TableCell>
-                  <TableCell>{business.contact_email}</TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={business.status === 'active' ? 'default' : 'secondary'}
-                      className={business.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-                    >
-                      {business.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {business.created_at ? new Date(business.created_at).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell>{business.review_threshold}</TableCell>
-                  <TableCell>
-                    <code className="text-xs bg-muted px-2 py-1 rounded">
-                      /{business.public_path}
-                    </code>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleViewDetails(business)}
-                      >
-                        <Eye className="w-4 h-4" />
-                        Details
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.open(`/${business.public_path}`, '_blank')}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Visit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleStatusToggle(business.id, business.status)}
-                        className={business.status === 'active' ? 'text-red-600' : 'text-green-600'}
-                      >
-                        {business.status === 'active' ? (
-                          <>
-                            <ToggleRight className="w-4 h-4" />
-                            Deactivate
-                          </>
-                        ) : (
-                          <>
-                            <ToggleLeft className="w-4 h-4" />
-                            Activate
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Tabs */}
+      <Tabs defaultValue="businesses" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="businesses">Business Accounts</TabsTrigger>
+          <TabsTrigger value="subscriptions">Subscription Management</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="businesses" className="space-y-6">
+          {/* Filters */}
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search businesses..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 w-64"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Business Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Accounts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Business Name</TableHead>
+                    <TableHead>Contact Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created Date</TableHead>
+                    <TableHead>Review Threshold</TableHead>
+                    <TableHead>Public Path</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredBusinesses.map((business) => (
+                    <TableRow key={business.id}>
+                      <TableCell className="font-medium">
+                        {business.business_name}
+                      </TableCell>
+                      <TableCell>{business.contact_email}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={business.status === 'active' ? 'default' : 'secondary'}
+                          className={business.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                        >
+                          {business.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {business.created_at ? new Date(business.created_at).toLocaleDateString() : 'N/A'}
+                      </TableCell>
+                      <TableCell>{business.review_threshold}</TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-muted px-2 py-1 rounded">
+                          /{business.public_path}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewDetails(business)}
+                          >
+                            <Eye className="w-4 h-4" />
+                            Details
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/${business.public_path}`, '_blank')}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                            Visit
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusToggle(business.id, business.status)}
+                            className={business.status === 'active' ? 'text-red-600' : 'text-green-600'}
+                          >
+                            {business.status === 'active' ? (
+                              <>
+                                <ToggleRight className="w-4 h-4" />
+                                Deactivate
+                              </>
+                            ) : (
+                              <>
+                                <ToggleLeft className="w-4 h-4" />
+                                Activate
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="subscriptions" className="space-y-6">
+          <SuperAdminSubscriptionManager />
+        </TabsContent>
+      </Tabs>
 
       {/* Business Details Dialog */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>

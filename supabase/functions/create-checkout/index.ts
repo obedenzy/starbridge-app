@@ -49,7 +49,7 @@ serve(async (req) => {
       .single();
     
     if (businessError) throw new Error("Business settings not found");
-    logStep("Business settings found", { businessId: businessData.id });
+    logStep("Business settings found", { businessId: businessData.id, customAmount: businessData.custom_subscription_amount });
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
@@ -71,10 +71,37 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
+    // Determine pricing based on custom amount or default
+    let priceId = "price_1S956JEsJSpdVJsRmkDeoO9w"; // Default Business subscription price
+    
+    if (businessData.custom_subscription_amount) {
+      // Create a custom price for this subscription amount
+      logStep("Creating custom price", { amount: businessData.custom_subscription_amount });
+      
+      const customPrice = await stripe.prices.create({
+        unit_amount: businessData.custom_subscription_amount,
+        currency: 'usd',
+        recurring: {
+          interval: 'month',
+        },
+        product_data: {
+          name: `Business Pro Plan - ${businessData.business_name}`,
+          description: `Custom subscription for ${businessData.business_name}`,
+        },
+        metadata: {
+          business_id: businessData.id,
+          custom_price: 'true'
+        }
+      });
+      
+      priceId = customPrice.id;
+      logStep("Custom price created", { priceId, amount: businessData.custom_subscription_amount });
+    }
+    
     const sessionParams: any = {
       line_items: [
         {
-          price: "price_1S956JEsJSpdVJsRmkDeoO9w", // Business subscription price
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -84,6 +111,7 @@ serve(async (req) => {
       metadata: {
         user_id: user.id,
         business_id: businessData.id,
+        custom_amount: businessData.custom_subscription_amount?.toString() || 'default',
       },
     };
 

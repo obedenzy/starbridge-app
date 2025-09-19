@@ -19,6 +19,7 @@ export type Database = {
           business_name: string
           contact_email: string
           created_at: string
+          custom_subscription_amount: number | null
           google_review_url: string | null
           id: string
           payment_failed_at: string | null
@@ -37,6 +38,7 @@ export type Database = {
           business_name: string
           contact_email: string
           created_at?: string
+          custom_subscription_amount?: number | null
           google_review_url?: string | null
           id?: string
           payment_failed_at?: string | null
@@ -55,6 +57,7 @@ export type Database = {
           business_name?: string
           contact_email?: string
           created_at?: string
+          custom_subscription_amount?: number | null
           google_review_url?: string | null
           id?: string
           payment_failed_at?: string | null

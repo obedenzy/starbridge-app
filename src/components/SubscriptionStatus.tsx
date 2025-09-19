@@ -5,7 +5,7 @@ import { useReview } from "@/contexts/ReviewContext";
 import { Check, Crown, CreditCard } from "lucide-react";
 
 export function SubscriptionStatus() {
-  const { subscriptionStatus, createCheckout, openCustomerPortal } = useReview();
+  const { subscriptionStatus, businessSettings, createCheckout } = useReview();
 
   if (!subscriptionStatus) {
     return (
@@ -65,7 +65,10 @@ export function SubscriptionStatus() {
           ) : (
             <Button onClick={createCheckout} className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
-              Upgrade to Pro ($250/month)
+              Upgrade to Pro ({businessSettings?.custom_subscription_amount 
+                ? `$${(businessSettings.custom_subscription_amount / 100).toFixed(2)}/month`
+                : '$250/month'
+              })
             </Button>
           )}
         </div>
