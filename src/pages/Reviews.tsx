@@ -86,7 +86,7 @@ const Reviews = () => {
     });
   };
 
-  const reviewUrl = `${window.location.origin}/review/${businessSettings.businessName.toLowerCase().replace(/\s+/g, '-')}`;
+  const reviewUrl = `${window.location.origin}/review/${user.businessAccountId}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(reviewUrl);
@@ -248,20 +248,26 @@ const Reviews = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex space-x-2">
-                <Input
-                  value={reviewUrl}
-                  readOnly
-                  className="h-12 bg-muted/50 font-mono text-sm"
-                />
-                <Button variant="outline" onClick={copyToClipboard}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy
-                </Button>
-                <Button variant="outline" onClick={() => window.open(reviewUrl, '_blank')}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </Button>
+              <div className="space-y-2">
+                <Label>Public Review Form URL</Label>
+                <div className="flex space-x-2">
+                  <Input
+                    value={reviewUrl}
+                    readOnly
+                    className="h-12 bg-muted/50 font-mono text-sm"
+                  />
+                  <Button variant="outline" onClick={copyToClipboard}>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button variant="outline" onClick={() => window.open(reviewUrl, '_blank')}>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Preview
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Share this URL with customers to collect reviews. This form can be accessed by anyone without logging in.
+                </p>
               </div>
             </CardContent>
           </Card>
