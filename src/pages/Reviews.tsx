@@ -87,6 +87,8 @@ const Reviews = () => {
   };
 
   const reviewUrl = `${window.location.origin}/review?businessAccountId=${user.businessAccountId}`;
+  console.log('Current user:', user);
+  console.log('Generated review URL:', reviewUrl);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(reviewUrl);

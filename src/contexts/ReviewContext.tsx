@@ -246,19 +246,34 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const getBusinessByAccountId = (accountId: string): BusinessSettings | null => {
+    console.log('Looking for business with accountId:', accountId);
     try {
       const savedUsers = localStorage.getItem('reviewApp_users');
-      if (!savedUsers) return null;
+      if (!savedUsers) {
+        console.log('No saved users found');
+        return null;
+      }
       
       const users = JSON.parse(savedUsers);
-      const userEntry = Object.values(users).find((user: any) => user.businessAccountId === accountId) as any;
+      console.log('All users:', users);
       
-      if (!userEntry) return null;
+      const userEntry = Object.values(users).find((user: any) => user.businessAccountId === accountId) as any;
+      console.log('Found user entry:', userEntry);
+      
+      if (!userEntry) {
+        console.log('No user found with businessAccountId:', accountId);
+        return null;
+      }
       
       const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-      if (!savedSettings) return null;
+      if (!savedSettings) {
+        console.log('No saved settings found');
+        return null;
+      }
       
       const allSettings = JSON.parse(savedSettings);
+      console.log('All settings:', allSettings);
+      console.log('Settings for user:', allSettings[userEntry.id]);
       return allSettings[userEntry.id] || null;
     } catch (error) {
       console.error('Error in getBusinessByAccountId:', error);
