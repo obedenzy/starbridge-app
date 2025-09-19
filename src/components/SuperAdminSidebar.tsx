@@ -55,7 +55,10 @@ export function SuperAdminSidebar() {
     }
   };
 
-  if (!user) return null;
+  // Handle null user case without early return
+  if (!user) {
+    return null;
+  }
 
   return (
     <Sidebar className={collapsed ? "w-16" : "w-64"} collapsible="icon">
