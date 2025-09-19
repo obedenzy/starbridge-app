@@ -26,8 +26,10 @@ const ReviewForm = () => {
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
+    console.log('ReviewForm mounted, businessAccountId:', businessAccountId);
     if (businessAccountId) {
       const foundBusiness = getBusinessByAccountId(businessAccountId);
+      console.log('Found business:', foundBusiness);
       setBusiness(foundBusiness);
     }
   }, [businessAccountId, getBusinessByAccountId]);
@@ -91,6 +93,25 @@ const ReviewForm = () => {
       setIsSubmitted(true);
     }
   };
+
+  if (!businessAccountId) {
+    return (
+      <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Star className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-xl font-semibold mb-2">Missing Business ID</h2>
+            <p className="text-muted-foreground mb-4">
+              No business account ID provided in the URL.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              URL should include: ?businessAccountId=YOUR_BUSINESS_ID
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!business) {
     return (
