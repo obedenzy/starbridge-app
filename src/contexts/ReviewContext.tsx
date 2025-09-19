@@ -198,6 +198,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     setProfile(null);
     setReviews([]);
     setUserRole(null);
+    // Redirect to login page after logout
+    window.location.href = '/login';
   };
 
   const addReview = async (review: Omit<Review, 'id' | 'created_at'>) => {

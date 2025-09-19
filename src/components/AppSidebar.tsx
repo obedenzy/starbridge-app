@@ -33,12 +33,14 @@ const menuItems = [
 ];
 
 export function AppSidebar() {
+  // Always call all hooks first
   const { state } = useSidebar();
   const location = useLocation();
   const { user, logout, businessSettings, profile } = useReview();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Calculate derived values after hooks
   const currentPath = location.pathname;
-
   const isActive = (path: string) => currentPath === path;
   const collapsed = state === "collapsed";
 
@@ -54,7 +56,7 @@ export function AppSidebar() {
     }
   };
 
-  // Handle null user case without early return
+  // Handle null user case after all hooks are called
   if (!user) {
     return null;
   }
