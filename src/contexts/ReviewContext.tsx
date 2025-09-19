@@ -387,13 +387,31 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getBusinessByPath = async (path: string): Promise<BusinessSettings | null> => {
     const { data, error } = await supabase
-      .from('business_settings')
-      .select('*')
-      .eq('public_path', path)
+      .rpc('get_public_business_info', { business_path: path })
       .single();
 
     if (error) return null;
-    return data;
+    
+    // Return a partial BusinessSettings object with only public fields populated
+    // and other sensitive fields as null/undefined for security
+    return {
+      id: data.id,
+      business_name: data.business_name,
+      public_path: data.public_path,
+      status: data.status,
+      created_at: data.created_at,
+      updated_at: data.created_at, // Use created_at as fallback
+      // Sensitive fields are not included in public view for security
+      user_id: '',
+      contact_email: '',
+      google_review_url: null,
+      review_threshold: 4, // Default value
+      stripe_customer_id: null,
+      stripe_subscription_id: null,
+      subscription_status: null,
+      subscription_end_date: null,
+      payment_failed_at: null,
+    } as BusinessSettings;
   };
 
   const getBusinessByAccountId = async (accountId: string): Promise<BusinessSettings | null> => {
