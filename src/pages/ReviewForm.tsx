@@ -9,6 +9,7 @@ import { StarRating } from '@/components/StarRating';
 import { useReview } from '@/contexts/ReviewContext';
 import { useToast } from '@/hooks/use-toast';
 import { Star, ExternalLink, CheckCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const ReviewForm = () => {
   const [searchParams] = useSearchParams();
@@ -69,18 +70,42 @@ const ReviewForm = () => {
       // This form submission is only for low ratings that need manual review
 
       // Otherwise, save the review locally
-      addReview({
+      const result = await addReview({
         rating,
         customer_name: name,
+        customer_email: email,
         subject,
         comment,
         business_id: business.id
       });
 
+      if (result.success && result.data) {
+        // Send email notifications
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-review-notification', {
+            body: {
+              reviewId: result.data.id,
+              businessId: business.id,
+              customerName: name,
+              customerEmail: email,
+              rating,
+              comment,
+              subject
+            }
+          });
+
+          if (emailError) {
+            console.error('Error sending email notifications:', emailError);
+          }
+        } catch (emailError) {
+          console.error('Error invoking email function:', emailError);
+        }
+      }
+
       setIsSubmitted(true);
       toast({
         title: "Review submitted!",
-        description: "Thank you for your feedback!",
+        description: "Thank you for your feedback! Confirmation emails have been sent.",
       });
     } catch (error) {
       toast({

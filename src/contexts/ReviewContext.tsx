@@ -7,6 +7,7 @@ export interface Review {
   id: string;
   rating: number;
   customer_name: string;
+  customer_email?: string;
   subject: string;
   comment: string;
   business_id: string;
@@ -42,7 +43,7 @@ interface ReviewContextType {
   
   // Reviews
   reviews: Review[];
-  addReview: (review: Omit<Review, 'id' | 'created_at'>) => Promise<void>;
+  addReview: (review: Omit<Review, 'id' | 'created_at'>) => Promise<{ success: boolean; data?: any; error?: any }>;
   getReviewsByBusiness: (businessId: string) => Review[];
   
   // Business Settings
@@ -207,12 +208,14 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error('Error adding review:', error);
-        return;
+        return { success: false, error };
       }
 
       setReviews(prev => [data, ...prev]);
+      return { success: true, data };
     } catch (error) {
       console.error('Error adding review:', error);
+      return { success: false, error };
     }
   };
 
