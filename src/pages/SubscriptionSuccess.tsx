@@ -12,11 +12,36 @@ export default function SubscriptionSuccess() {
 
   useEffect(() => {
     const verifySubscription = async () => {
-      // Wait a moment for Stripe to process the subscription
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      let attempts = 0;
+      const maxAttempts = 8; // Try for up to 16 seconds
       
-      // Check subscription status
-      await checkSubscription();
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`Subscription verification attempt ${attempts}/${maxAttempts}`);
+        
+        // Wait before checking (2 seconds for first attempt, then 2 seconds between each)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Check subscription status and get the result
+        const result = await checkSubscription();
+        
+        console.log('Subscription check result:', result);
+        
+        // Check if subscription is now active
+        if (result?.subscribed) {
+          console.log('Subscription verified successfully');
+          setIsChecking(false);
+          // Navigate to dashboard immediately
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
+          return;
+        }
+        
+        console.log('Subscription not yet active, retrying...');
+      }
+      
+      console.log('Max verification attempts reached, assuming subscription will be processed');
       setIsChecking(false);
     };
 

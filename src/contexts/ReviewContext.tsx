@@ -55,7 +55,7 @@ interface ReviewContextType {
   getBusinessByAccountId: (accountId: string) => Promise<BusinessSettings | null>;
   getReviewsByBusiness: (businessId: string) => Promise<Review[]>;
   changePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
-  checkSubscription: () => Promise<void>;
+  checkSubscription: () => Promise<{ subscribed: boolean; product_id?: string | null; subscription_end?: string | null } | null>;
   createCheckout: () => Promise<void>;
   openCustomerPortal: () => Promise<void>;
   getAnalytics: () => Promise<{
@@ -183,8 +183,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const checkSubscription = async () => {
-    if (!session) return;
+  const checkSubscription = async (): Promise<{ subscribed: boolean; product_id?: string | null; subscription_end?: string | null } | null> => {
+    if (!session) return null;
     
     try {
       const { data, error } = await supabase.functions.invoke('check-subscription', {
@@ -195,8 +195,9 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         console.error('Error checking subscription:', error);
-        setSubscriptionStatus({ subscribed: false, product_id: null, subscription_end: null });
-        return;
+        const defaultStatus = { subscribed: false, product_id: null, subscription_end: null };
+        setSubscriptionStatus(defaultStatus);
+        return defaultStatus;
       }
 
       setSubscriptionStatus(data);
@@ -212,9 +213,13 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
           setBusinessSettings(prev => prev ? { ...prev, status: data.subscribed ? 'active' : 'inactive' } : null);
         }
       }
+      
+      return data;
     } catch (error) {
-      console.error('Error checking subscription:', error);
-      setSubscriptionStatus({ subscribed: false, product_id: null, subscription_end: null });
+      console.error('Error in checkSubscription:', error);
+      const defaultStatus = { subscribed: false, product_id: null, subscription_end: null };
+      setSubscriptionStatus(defaultStatus);
+      return defaultStatus;
     }
   };
 
