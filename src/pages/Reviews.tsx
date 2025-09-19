@@ -86,7 +86,7 @@ const Reviews = () => {
     });
   };
 
-  const reviewUrl = `${window.location.origin}/review/${user.businessAccountId}`;
+  const reviewUrl = `${window.location.origin}/review?businessAccountId=${user.businessAccountId}`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(reviewUrl);

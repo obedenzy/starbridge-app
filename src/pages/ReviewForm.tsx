@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Star, ExternalLink, CheckCircle } from 'lucide-react';
 
 const ReviewForm = () => {
-  const { businessAccountId } = useParams<{ businessAccountId: string }>();
+  const [searchParams] = useSearchParams();
+  const businessAccountId = searchParams.get('businessAccountId');
   const { getBusinessByAccountId, addReview } = useReview();
   const { toast } = useToast();
   
