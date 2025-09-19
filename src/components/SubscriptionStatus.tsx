@@ -58,7 +58,7 @@ export function SubscriptionStatus() {
 
         <div className="flex gap-2">
           {subscriptionStatus.subscribed ? (
-            <Button onClick={openCustomerPortal} variant="outline" className="flex items-center gap-2">
+            <Button onClick={() => window.location.href = '/billing'} variant="outline" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" />
               Manage Subscription
             </Button>
