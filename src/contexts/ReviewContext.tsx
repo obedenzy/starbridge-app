@@ -225,9 +225,18 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
   const createCheckout = async () => {
     if (!session) {
-      console.error('No session found');
+      console.error('No session found - please log in first');
+      alert('Please log in to subscribe');
       return;
     }
+
+    if (!user?.email) {
+      console.error('No user email found');
+      alert('User information not available. Please refresh and try again.');
+      return;
+    }
+
+    console.log('Creating checkout session...');
 
     try {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
@@ -236,16 +245,24 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         },
       });
 
+      console.log('Checkout response:', { data, error });
+
       if (error) {
         console.error('Error creating checkout:', error);
+        alert(`Error creating checkout: ${error.message || 'Unknown error'}`);
         return;
       }
 
       if (data?.url) {
-        window.location.href = data.url;
+        console.log('Redirecting to checkout:', data.url);
+        window.open(data.url, '_blank');
+      } else {
+        console.error('No checkout URL received');
+        alert('Failed to create checkout session. Please try again.');
       }
     } catch (error) {
       console.error('Error creating checkout:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
     }
   };
 
