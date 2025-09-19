@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useReview } from '@/contexts/ReviewContext';
 import { useToast } from '@/hooks/use-toast';
-import { Settings as SettingsIcon, Save, Building, Mail, User as UserIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Building, Mail, User as UserIcon, Copy } from 'lucide-react';
 
 const Settings = () => {
   const { user, businessSettings, updateBusinessSettings } = useReview();
@@ -124,6 +124,58 @@ const Settings = () => {
               />
               <p className="text-xs text-muted-foreground">
                 This email may be shown to customers for follow-up communications
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Review Form Settings */}
+        <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Mail className="w-5 h-5 text-accent" />
+              <span>Review Form Settings</span>
+            </CardTitle>
+            <CardDescription>
+              Your public review form URL and configuration
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Public Review Form URL</Label>
+              <div className="flex space-x-2">
+                <Input
+                  value={`${window.location.origin}/review/${user.businessAccountId}`}
+                  readOnly
+                  className="font-mono text-xs bg-muted/50"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/review/${user.businessAccountId}`);
+                    toast({
+                      title: "URL copied",
+                      description: "Review form URL has been copied to clipboard.",
+                    });
+                  }}
+                >
+                  Copy URL
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Share this URL with customers to collect reviews. This form can be accessed by anyone without logging in.
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Business Account ID</Label>
+              <Input
+                value={user.businessAccountId}
+                readOnly
+                className="font-mono text-xs bg-muted/50"
+              />
+              <p className="text-xs text-muted-foreground">
+                This unique ID is used to identify your business in the review URL
               </p>
             </div>
           </CardContent>

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useReview } from '@/contexts/ReviewContext';
 import { useToast } from '@/hooks/use-toast';
-import { User, Mail, Building, Calendar, Save, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Building, Calendar, Save, Lock, Eye, EyeOff, Copy } from 'lucide-react';
 
 const Profile = () => {
   const { user, businessSettings, updateBusinessSettings, changePassword } = useReview();
@@ -367,6 +367,36 @@ const Profile = () => {
                     Preview Review Form
                   </Link>
                 </Button>
+                
+                {/* Public Review URL Display */}
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                  <Label className="text-xs font-medium text-muted-foreground">
+                    Public Review Form URL:
+                  </Label>
+                  <div className="flex items-center space-x-2 mt-1">
+                    <Input
+                      value={`${window.location.origin}/review/${user.businessAccountId}`}
+                      readOnly
+                      className="text-xs font-mono bg-background"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/review/${user.businessAccountId}`);
+                        toast({
+                          title: "Copied to clipboard",
+                          description: "Review form URL has been copied.",
+                        });
+                      }}
+                    >
+                      Copy
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Share this URL with customers to collect reviews
+                  </p>
+                </div>
               </CardContent>
             </Card>
         </div>
