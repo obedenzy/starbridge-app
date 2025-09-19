@@ -64,23 +64,23 @@ serve(async (req) => {
 
     console.log('Auth user created:', authUser.user.id)
 
-    // Create profile record
+    // Wait a moment for the trigger to create the profile
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Update the existing profile to super admin details
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        user_id: authUser.user.id,
+      .update({
         full_name: fullName || 'Super Admin',
-        email: email,
         business_name: 'Platform Administration',
         last_login: new Date().toISOString()
       })
+      .eq('user_id', authUser.user.id)
 
     if (profileError) {
-      console.error('Profile creation error:', profileError)
-      // Try to clean up auth user if profile creation fails
-      await supabaseAdmin.auth.admin.deleteUser(authUser.user.id)
+      console.error('Profile update error:', profileError)
       return new Response(
-        JSON.stringify({ error: 'Failed to create profile', details: profileError.message }),
+        JSON.stringify({ error: 'Failed to update profile', details: profileError.message }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -88,23 +88,42 @@ serve(async (req) => {
       )
     }
 
-    // Assign super admin role
+    // Assign super admin role (this will also delete any existing business_user role)
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .insert({
+      .upsert({
         user_id: authUser.user.id,
         role: 'super_admin'
+      }, {
+        onConflict: 'user_id,role'
       })
 
     if (roleError) {
       console.error('Role assignment error:', roleError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to assign super admin role', details: roleError.message }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      // Try alternative approach - delete existing roles first
+      await supabaseAdmin
+        .from('user_roles')
+        .delete()
+        .eq('user_id', authUser.user.id)
+      
+      // Then insert super admin role
+      const { error: roleError2 } = await supabaseAdmin
+        .from('user_roles')
+        .insert({
+          user_id: authUser.user.id,
+          role: 'super_admin'
+        })
+      
+      if (roleError2) {
+        console.error('Role assignment error 2:', roleError2)
+        return new Response(
+          JSON.stringify({ error: 'Failed to assign super admin role', details: roleError2.message }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
     }
 
     console.log('Super admin created successfully:', authUser.user.id)
