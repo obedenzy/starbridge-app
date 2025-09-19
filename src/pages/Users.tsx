@@ -42,7 +42,7 @@ const Users = () => {
     getUserBusinessRole,
     businessRole,
     getBusinessUsers,
-    inviteUserToBusiness,
+    createBusinessUser,
     removeUserFromBusiness,
     updateBusinessUserRole,
     changeUserPassword
@@ -51,14 +51,15 @@ const Users = () => {
   
   const [businessUsers, setBusinessUsers] = useState<BusinessUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<BusinessUser | null>(null);
   
-  // Invite form state
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'business_admin' | 'business_user'>('business_user');
-  const [inviteLoading, setInviteLoading] = useState(false);
+  // Create user form state
+  const [createEmail, setCreateEmail] = useState('');
+  const [createName, setCreateName] = useState('');
+  const [createRole, setCreateRole] = useState<'business_admin' | 'business_user'>('business_user');
+  const [createLoading, setCreateLoading] = useState(false);
   
   // Password form state
   const [newPassword, setNewPassword] = useState('');
@@ -109,8 +110,8 @@ const Users = () => {
   // Check if user has admin permissions
   const canManageUsers = businessRole === 'business_admin';
 
-  const handleInviteUser = async () => {
-    if (!inviteEmail.trim()) {
+  const handleCreateUser = async () => {
+    if (!createEmail.trim()) {
       toast({
         title: "Error",
         description: "Please enter an email address.",
@@ -118,22 +119,32 @@ const Users = () => {
       });
       return;
     }
+    
+    if (!createName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a full name.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setInviteLoading(true);
+    setCreateLoading(true);
     try {
-      await inviteUserToBusiness(inviteEmail, inviteRole);
-      setInviteDialogOpen(false);
-      setInviteEmail('');
-      setInviteRole('business_user');
+      await createBusinessUser(createEmail, createName, createRole);
+      setCreateDialogOpen(false);
+      setCreateEmail('');
+      setCreateName('');
+      setCreateRole('business_user');
       await loadBusinessUsers(); // Refresh the list
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "Failed to invite user.",
+        description: error.message || "Failed to create user.",
         variant: "destructive",
       });
     } finally {
-      setInviteLoading(false);
+      setCreateLoading(false);
     }
   };
 
@@ -205,18 +216,18 @@ const Users = () => {
             Refresh
           </Button>
           {canManageUsers && (
-            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-gradient-primary hover:opacity-90 text-white">
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Invite User
+                  Create User
                 </Button>
               </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invite User to Business</DialogTitle>
+                <DialogTitle>Create Business User</DialogTitle>
                 <DialogDescription>
-                  Send an invitation to a user to join your business account.
+                  Create a new user account for your business with a temporary password.
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
@@ -225,14 +236,24 @@ const Users = () => {
                   <Input
                     id="email"
                     type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
+                    value={createEmail}
+                    onChange={(e) => setCreateEmail(e.target.value)}
                     placeholder="user@example.com"
                   />
                 </div>
                 <div>
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div>
                   <Label htmlFor="role">Role</Label>
-                  <Select value={inviteRole} onValueChange={(value: 'business_admin' | 'business_user') => setInviteRole(value)}>
+                  <Select value={createRole} onValueChange={(value: 'business_admin' | 'business_user') => setCreateRole(value)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -244,11 +265,11 @@ const Users = () => {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleInviteUser} disabled={inviteLoading}>
-                  {inviteLoading ? 'Inviting...' : 'Send Invite'}
+                <Button onClick={handleCreateUser} disabled={createLoading}>
+                  {createLoading ? 'Creating...' : 'Create User'}
                 </Button>
               </DialogFooter>
             </DialogContent>

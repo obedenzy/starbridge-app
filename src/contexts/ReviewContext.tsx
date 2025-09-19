@@ -50,6 +50,7 @@ interface ReviewContextType {
     subscription_end: string | null;
   } | null;
   redirectPath: string | null;
+  supabase: typeof supabase;
   login: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signup: (email: string, password: string, businessName: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
@@ -73,10 +74,11 @@ interface ReviewContextType {
   // Business user management
   getUserBusinessRole: () => Promise<'business_admin' | 'business_user' | null>;
   getBusinessUsers: () => Promise<any[]>;
-  inviteUserToBusiness: (email: string, role: 'business_admin' | 'business_user') => Promise<void>;
+  createBusinessUser: (email: string, fullName: string, role: 'business_admin' | 'business_user') => Promise<any>;
   removeUserFromBusiness: (userId: string) => Promise<void>;
   updateBusinessUserRole: (userId: string, role: 'business_admin' | 'business_user') => Promise<void>;
   changeUserPassword: (userId: string, newPassword: string) => Promise<void>;
+  requiresPasswordChange: () => boolean;
   // Super admin functions
   getAllBusinessAccounts: () => Promise<BusinessSettings[]>;
   getAllUsers: () => Promise<Profile[]>;
@@ -491,6 +493,38 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const createBusinessUser = async (email: string, fullName: string, role: 'business_admin' | 'business_user') => {
+    if (!businessSettings) {
+      throw new Error('No business settings found');
+    }
+
+    // Generate temporary password
+    const tempPassword = Math.random().toString(36).slice(-10).toUpperCase();
+
+    const { data, error } = await supabase.functions.invoke('create-business-user', {
+      body: {
+        email,
+        fullName,
+        role,
+        businessId: businessSettings.id,
+        tempPassword
+      }
+    });
+
+    if (error) {
+      console.error('Error creating business user:', error);
+      throw new Error(error.message || 'Failed to create business user');
+    }
+
+    toast({
+      title: "Success",
+      description: `User created successfully! Temporary password: ${tempPassword}`,
+      duration: 10000,
+    });
+
+    return { ...data, tempPassword };
+  };
+
   const removeUserFromBusiness = async (userId: string) => {
     if (!businessSettings) throw new Error('No business settings found');
     
@@ -565,6 +599,11 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       });
       throw error;
     }
+  };
+
+  // Check if user needs to change password
+  const requiresPasswordChange = () => {
+    return user?.user_metadata?.requires_password_change === true;
   };
 
   useEffect(() => {
@@ -913,6 +952,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       businessRole,
       subscriptionStatus,
       redirectPath,
+      supabase,
       login,
       signup,
       logout,
@@ -930,10 +970,11 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
        // Business user management
        getUserBusinessRole,
        getBusinessUsers,
-       inviteUserToBusiness,
+       createBusinessUser,
        removeUserFromBusiness,
        updateBusinessUserRole,
-       changeUserPassword,
+        changeUserPassword,
+        requiresPasswordChange,
       // Super admin functions
       getAllBusinessAccounts,
       getAllUsers,

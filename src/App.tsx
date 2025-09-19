@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ReviewProvider } from "@/contexts/ReviewContext";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -25,8 +25,8 @@ import { SuperAdminSidebar } from "@/components/SuperAdminSidebar";
 import { SuperAdminSubscriptions } from "@/components/SuperAdminSubscriptions";
 import { SubscriptionPrompt } from "@/components/SubscriptionPrompt";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
-import { useReview } from "@/contexts/ReviewContext";
-import { Navigate, useLocation } from "react-router-dom";
+import { useReview } from '@/contexts/ReviewContext';
+import ForcePasswordChange from '@/components/ForcePasswordChange';
 
 const queryClient = new QueryClient();
 
@@ -90,41 +90,50 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ReviewProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/dashboard" element={<AppWithSidebar><Dashboard /></AppWithSidebar>} />
-            <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
-            <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
-            <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
-            <Route path="/users" element={<AppWithSidebar><Users /></AppWithSidebar>} />
-            <Route path="/billing" element={<AppWithSidebar><Billing /></AppWithSidebar>} />
-            
-            {/* Super Admin Routes */}
-            <Route path="/super-admin/dashboard" element={<AppWithSidebar><SuperAdminDashboard /></AppWithSidebar>} />
-            <Route path="/super-admin/businesses" element={<AppWithSidebar><SuperAdminBusinesses /></AppWithSidebar>} />
-            <Route path="/super-admin/users" element={<AppWithSidebar><SuperAdminUsers /></AppWithSidebar>} />
-            <Route path="/super-admin/subscriptions" element={<AppWithSidebar><SuperAdminSubscriptions /></AppWithSidebar>} />
-            <Route path="/super-admin/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
-            <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
-            <Route path="/create-super-admin" element={<CreateSuperAdmin />} />
-            <Route path="/subscription-required" element={<SubscriptionPrompt />} />
-            <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-            <Route path="/review" element={<ReviewForm />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ReviewProvider>
-  </QueryClientProvider>
-);
+function App() {
+  const { user, requiresPasswordChange } = useReview();
+
+  // Check if user needs to change password
+  if (user && requiresPasswordChange()) {
+    return <ForcePasswordChange />;
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ReviewProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/dashboard" element={<AppWithSidebar><Dashboard /></AppWithSidebar>} />
+              <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
+              <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
+              <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
+              <Route path="/users" element={<AppWithSidebar><Users /></AppWithSidebar>} />
+              <Route path="/billing" element={<AppWithSidebar><Billing /></AppWithSidebar>} />
+              
+              {/* Super Admin Routes */}
+              <Route path="/super-admin/dashboard" element={<AppWithSidebar><SuperAdminDashboard /></AppWithSidebar>} />
+              <Route path="/super-admin/businesses" element={<AppWithSidebar><SuperAdminBusinesses /></AppWithSidebar>} />
+              <Route path="/super-admin/users" element={<AppWithSidebar><SuperAdminUsers /></AppWithSidebar>} />
+              <Route path="/super-admin/subscriptions" element={<AppWithSidebar><SuperAdminSubscriptions /></AppWithSidebar>} />
+              <Route path="/super-admin/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
+              <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
+              <Route path="/create-super-admin" element={<CreateSuperAdmin />} />
+              <Route path="/subscription-required" element={<SubscriptionPrompt />} />
+              <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+              <Route path="/review" element={<ReviewForm />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ReviewProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
