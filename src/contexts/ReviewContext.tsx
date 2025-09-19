@@ -89,7 +89,45 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     if (savedReviews) {
       setReviews(JSON.parse(savedReviews));
     }
+    
+    // Initialize with sample data if no users exist (for demo purposes)
+    initializeSampleData();
   }, []);
+
+  const initializeSampleData = () => {
+    const savedUsers = localStorage.getItem('reviewApp_users');
+    if (!savedUsers || Object.keys(JSON.parse(savedUsers)).length === 0) {
+      // Create a sample business for demo purposes
+      const sampleUserId = 'demo-user-123';
+      const sampleBusinessAccountId = 'demo-business-456';
+      const now = new Date().toISOString();
+      
+      const sampleUser = {
+        id: sampleUserId,
+        email: 'demo@business.com',
+        password: 'demo123',
+        businessName: 'Demo Restaurant',
+        businessAccountId: sampleBusinessAccountId,
+        createdAt: now
+      };
+      
+      const users = { [sampleUser.email]: sampleUser };
+      localStorage.setItem('reviewApp_users', JSON.stringify(users));
+      
+      const sampleBusinessSettings: BusinessSettings = {
+        id: sampleUserId,
+        businessName: 'Demo Restaurant',
+        email: 'demo@business.com',
+        googleReviewUrl: 'https://maps.google.com/sample',
+        threshold: 4,
+        customMessage: 'Thank you for dining with us! Your feedback helps us serve you better.',
+        primaryColor: '#1e40af'
+      };
+      
+      const allSettings = { [sampleUserId]: sampleBusinessSettings };
+      localStorage.setItem('reviewApp_businessSettings', JSON.stringify(allSettings));
+    }
+  };
 
   // Authentication functions
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -208,19 +246,24 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const getBusinessByAccountId = (accountId: string): BusinessSettings | null => {
-    const savedUsers = localStorage.getItem('reviewApp_users');
-    if (!savedUsers) return null;
-    
-    const users = JSON.parse(savedUsers);
-    const userEntry = Object.values(users).find((user: any) => user.businessAccountId === accountId) as any;
-    
-    if (!userEntry) return null;
-    
-    const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-    if (!savedSettings) return null;
-    
-    const allSettings = JSON.parse(savedSettings);
-    return allSettings[userEntry.id] || null;
+    try {
+      const savedUsers = localStorage.getItem('reviewApp_users');
+      if (!savedUsers) return null;
+      
+      const users = JSON.parse(savedUsers);
+      const userEntry = Object.values(users).find((user: any) => user.businessAccountId === accountId) as any;
+      
+      if (!userEntry) return null;
+      
+      const savedSettings = localStorage.getItem('reviewApp_businessSettings');
+      if (!savedSettings) return null;
+      
+      const allSettings = JSON.parse(savedSettings);
+      return allSettings[userEntry.id] || null;
+    } catch (error) {
+      console.error('Error in getBusinessByAccountId:', error);
+      return null;
+    }
   };
 
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {

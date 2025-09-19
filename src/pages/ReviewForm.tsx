@@ -98,8 +98,11 @@ const ReviewForm = () => {
           <CardContent className="p-8 text-center">
             <Star className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-xl font-semibold mb-2">Business Not Found</h2>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               The review form you're looking for doesn't exist or has been removed.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Business ID: {businessAccountId}
             </p>
           </CardContent>
         </Card>
