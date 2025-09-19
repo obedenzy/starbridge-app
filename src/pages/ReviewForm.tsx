@@ -44,11 +44,14 @@ const ReviewForm = () => {
 
   // Automatically redirect if rating is above threshold
   useEffect(() => {
-    if (rating > 0 && business && rating >= business.threshold) {
-      if (business.googleReviewUrl) {
+    if (rating > 0 && business && rating >= business.threshold && business.googleReviewUrl) {
+      setShouldRedirect(true);
+      // Small delay to allow user to see the rating before redirect
+      const timer = setTimeout(() => {
         handleGoogleRedirect();
-      }
-    } else if (rating > 0) {
+      }, 1500);
+      return () => clearTimeout(timer);
+    } else {
       setShouldRedirect(false);
     }
   }, [rating, business]);
@@ -61,16 +64,8 @@ const ReviewForm = () => {
     setIsSubmitting(true);
 
     try {
-      // If rating meets threshold and Google URL exists, redirect to Google
-      if (shouldRedirect && business.googleReviewUrl) {
-        window.open(business.googleReviewUrl, '_blank');
-        setIsSubmitted(true);
-        toast({
-          title: "Thank you!",
-          description: "You've been redirected to leave a Google review.",
-        });
-        return;
-      }
+      // High ratings are already handled by the useEffect redirect
+      // This form submission is only for low ratings that need manual review
 
       // Otherwise, save the review locally
       addReview({
