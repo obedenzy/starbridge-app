@@ -38,10 +38,8 @@ const Profile = () => {
         </p>
       </div>
 
-      <div className="max-w-4xl">{/* Changed from mx-auto to container */}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Information */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">{/* Removed max-w-4xl constraint */}
+        {/* Profile Information */}
           <div className="lg:col-span-2">
             <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
               <CardHeader>
@@ -188,7 +186,6 @@ const Profile = () => {
                 </Button>
               </CardContent>
             </Card>
-          </div>
         </div>
       </div>
     </div>

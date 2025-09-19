@@ -40,7 +40,7 @@ const Settings = () => {
         </p>
       </div>
 
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6">{/* Removed max-w-2xl constraint */}
         {/* Account Information */}
         <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
           <CardHeader>
