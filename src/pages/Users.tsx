@@ -106,21 +106,8 @@ const Users = () => {
     return <Navigate to="/super-admin/dashboard" replace />;
   }
 
-  // Only business owners and business admins can access this page
-  if (businessRole !== 'business_admin') {
-    return (
-      <div className="p-6">
-        <Card className="max-w-md mx-auto">
-          <CardHeader>
-            <CardTitle>Access Denied</CardTitle>
-            <CardDescription>
-              You don't have permission to manage users for this business.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
-  }
+  // Check if user has admin permissions
+  const canManageUsers = businessRole === 'business_admin';
 
   const handleInviteUser = async () => {
     if (!inviteEmail.trim()) {
@@ -217,13 +204,14 @@ const Users = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-primary hover:opacity-90 text-white">
-                <UserPlus className="h-4 w-4 mr-2" />
-                Invite User
-              </Button>
-            </DialogTrigger>
+          {canManageUsers && (
+            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-primary hover:opacity-90 text-white">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite User
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Invite User to Business</DialogTitle>
@@ -265,6 +253,7 @@ const Users = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 
@@ -314,7 +303,7 @@ const Users = () => {
                     </div>
                   </div>
                   
-                  {!businessUser.is_owner && (
+                  {!businessUser.is_owner && canManageUsers && (
                     <div className="flex gap-2">
                       <Select 
                         value={businessUser.role} 

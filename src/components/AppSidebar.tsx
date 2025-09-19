@@ -43,9 +43,7 @@ export function AppSidebar() {
   const menuItems = [
     { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
     { title: "Reviews", url: "/reviews", icon: MessageSquare },
-    ...(businessRole === 'business_admin' ? [
-      { title: "Users", url: "/users", icon: Users }
-    ] : []),
+    { title: "Users", url: "/users", icon: Users },
     { title: "Billing", url: "/billing", icon: CreditCard },
     { title: "Business Settings", url: "/settings", icon: Settings },
     { title: "Profile", url: "/profile", icon: User },
