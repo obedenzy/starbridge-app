@@ -41,8 +41,8 @@ export function SuperAdminSidebar() {
   const isActive = (path: string) => currentPath === path;
   const collapsed = state === "collapsed";
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
   };
 
   if (!user) return null;

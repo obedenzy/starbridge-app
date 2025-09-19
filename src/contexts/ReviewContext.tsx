@@ -43,7 +43,7 @@ interface ReviewContextType {
   userRole: 'super_admin' | 'business_user' | null;
   login: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signup: (email: string, password: string, businessName: string) => Promise<{ error: AuthError | null }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   addReview: (review: Omit<Review, 'id' | 'created_at'>) => Promise<{ success: boolean; error?: string }>;
   updateBusinessSettings: (settings: Partial<BusinessSettings>) => Promise<void>;
   getBusinessByPath: (path: string) => Promise<BusinessSettings | null>;
@@ -84,13 +84,14 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loadUserData = async (userId: string) => {
     try {
-      // Load user role
-      const { data: roleData } = await supabase
+      // Load user role - use maybeSingle to handle cases where no role exists
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
+      // If no role found, default to business_user
       setUserRole(roleData?.role || 'business_user');
 
       // Load profile
@@ -189,8 +190,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     return { error };
   };
 
-  const logout = () => {
-    supabase.auth.signOut();
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setBusinessSettings(null);
