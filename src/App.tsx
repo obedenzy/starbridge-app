@@ -22,6 +22,7 @@ import SuperAdminUsers from "./pages/SuperAdminUsers";
 import { SuperAdminSidebar } from "@/components/SuperAdminSidebar";
 import { SuperAdminSubscriptions } from "@/components/SuperAdminSubscriptions";
 import { SubscriptionPrompt } from "@/components/SubscriptionPrompt";
+import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import { useReview } from "@/contexts/ReviewContext";
 import { Navigate, useLocation } from "react-router-dom";
 
@@ -117,6 +118,7 @@ const App = () => (
             <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/create-super-admin" element={<CreateSuperAdmin />} />
             <Route path="/subscription-required" element={<SubscriptionPrompt />} />
+            <Route path="/subscription-success" element={<SubscriptionSuccess />} />
             <Route path="/review" element={<ReviewForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

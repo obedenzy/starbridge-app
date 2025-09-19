@@ -237,7 +237,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data?.url) {
-        window.open(data.url, '_blank');
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error('Error creating checkout:', error);

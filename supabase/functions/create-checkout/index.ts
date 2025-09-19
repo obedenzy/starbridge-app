@@ -81,8 +81,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${origin}/dashboard?subscription=success`,
-      cancel_url: `${origin}/dashboard?subscription=cancelled`,
+      success_url: `${origin}/subscription-success`,
+      cancel_url: `${origin}/subscription-required?cancelled=true`,
       metadata: {
         user_id: user.id,
         business_id: businessData.id,
