@@ -172,8 +172,10 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         setReviews(reviewsData || []);
       }
 
-      // Check subscription status for business users
-      if (userRole !== 'super_admin') {
+      // Check subscription status for business users (not super admin)
+      const shouldCheckSubscription = !superAdminEmails.includes(userEmail || '') && 
+                                      (!roleData || roleData.role === 'business_user');
+      if (shouldCheckSubscription) {
         await checkSubscription();
       }
     } catch (error) {

@@ -62,9 +62,16 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
     }
     
     // Check subscription for business users trying to access dashboard
-    if (subscriptionStatus !== null && location.pathname !== '/subscription-required') {
-      if (!subscriptionStatus.subscribed) {
+    if (location.pathname !== '/subscription-required') {
+      // If subscription check is complete and user is not subscribed, redirect
+      if (subscriptionStatus !== null && !subscriptionStatus.subscribed) {
         console.log('Business user without subscription, redirecting to subscription prompt');
+        return <Navigate to="/subscription-required" replace />;
+      }
+      // If subscription status is still loading (null) after user role is set, also redirect
+      // This prevents showing loading state indefinitely
+      if (subscriptionStatus === null && userRole === 'business_user') {
+        console.log('Business user with pending subscription check, redirecting to subscription prompt');
         return <Navigate to="/subscription-required" replace />;
       }
     }
