@@ -15,14 +15,21 @@ import Settings from "./pages/Settings";
 import ReviewForm from "./pages/ReviewForm";
 import Reviews from "./pages/Reviews";
 import NotFound from "./pages/NotFound";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminBusinesses from "./pages/SuperAdminBusinesses";
+import SuperAdminUsers from "./pages/SuperAdminUsers";
+import { SuperAdminSidebar } from "@/components/SuperAdminSidebar";
+import { useReview } from "@/contexts/ReviewContext";
 
 const queryClient = new QueryClient();
 
 const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
+  const { userRole } = useReview();
+  
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
+        {userRole === 'super_admin' ? <SuperAdminSidebar /> : <AppSidebar />}
         <SidebarInset className="flex-1">
           <header className="h-14 flex items-center border-b bg-background px-4">
             <SidebarTrigger />
@@ -49,6 +56,13 @@ const App = () => (
             <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
             <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
+            
+            {/* Super Admin Routes */}
+            <Route path="/super-admin/dashboard" element={<AppWithSidebar><SuperAdminDashboard /></AppWithSidebar>} />
+            <Route path="/super-admin/businesses" element={<AppWithSidebar><SuperAdminBusinesses /></AppWithSidebar>} />
+            <Route path="/super-admin/users" element={<AppWithSidebar><SuperAdminUsers /></AppWithSidebar>} />
+            <Route path="/super-admin/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
+            <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/review" element={<ReviewForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

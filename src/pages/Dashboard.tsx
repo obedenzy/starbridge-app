@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,14 +17,62 @@ import {
   LogOut
 } from 'lucide-react';
 
+interface Analytics {
+  totalReviews: number;
+  averageRating: number;
+  ratingDistribution: { rating: number; count: number }[];
+  recentReviews: any[];
+}
+
 const Dashboard = () => {
-  const { user, logout, getAnalytics, businessSettings, profile } = useReview();
+  const { user, userRole, getAnalytics, businessSettings, profile } = useReview();
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [loading, setLoading] = useState(true);
 
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  const analytics = getAnalytics();
+  // Redirect super admin to their dashboard
+  if (userRole === 'super_admin') {
+    return <Navigate to="/super-admin/dashboard" replace />;
+  }
+
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        const data = await getAnalytics();
+        setAnalytics(data);
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (businessSettings) {
+      loadAnalytics();
+    } else {
+      setLoading(false);
+    }
+  }, [getAnalytics, businessSettings]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const defaultAnalytics = {
+    totalReviews: 0,
+    averageRating: 0,
+    ratingDistribution: [],
+    recentReviews: []
+  };
+
+  const displayAnalytics = analytics || defaultAnalytics;
 
   return (
     <div className="p-6 space-y-6">
@@ -40,24 +89,24 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatsCard
             title="Total Reviews"
-            value={analytics.totalReviews}
+            value={displayAnalytics.totalReviews}
             icon={<MessageSquare className="w-6 h-6" />}
           />
           <StatsCard
             title="Average Rating"
-            value={analytics.averageRating || 0}
+            value={displayAnalytics.averageRating || 0}
             icon={<Star className="w-6 h-6" />}
           />
           <StatsCard
             title="This Month"
-            value={analytics.recentReviews.filter(r => 
+            value={displayAnalytics.recentReviews.filter(r => 
               new Date(r.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
             ).length}
             icon={<TrendingUp className="w-6 h-6" />}
           />
           <StatsCard
             title="Happy Customers"
-            value={analytics.recentReviews.filter(r => r.rating >= 4).length}
+            value={displayAnalytics.recentReviews.filter(r => r.rating >= 4).length}
             icon={<Users className="w-6 h-6" />}
           />
         </div>
@@ -74,9 +123,10 @@ const Dashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 {[5, 4, 3, 2, 1].map((rating) => {
-                  const count = analytics.ratingDistribution[rating] || 0;
-                  const percentage = analytics.totalReviews > 0 
-                    ? (count / analytics.totalReviews) * 100 
+                  const ratingData = displayAnalytics.ratingDistribution.find(r => r.rating === rating);
+                  const count = ratingData?.count || 0;
+                  const percentage = displayAnalytics.totalReviews > 0 
+                    ? (count / displayAnalytics.totalReviews) * 100 
                     : 0;
                   
                   return (
@@ -114,14 +164,14 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analytics.recentReviews.length === 0 ? (
+                {displayAnalytics.recentReviews.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No reviews yet</p>
                     <p className="text-sm">Share your review link to get started!</p>
                   </div>
                 ) : (
-                  analytics.recentReviews.map((review) => (
+                  displayAnalytics.recentReviews.map((review) => (
                     <div key={review.id} className="p-4 border border-border/50 rounded-lg bg-card/50">
                       <div className="flex items-start justify-between mb-2">
                         <div>
