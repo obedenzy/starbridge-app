@@ -9,8 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 import { UserPlus, Star } from 'lucide-react';
 
 const Signup = () => {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { signup, user } = useReview();
@@ -24,10 +26,29 @@ const Signup = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password mismatch",
+        description: "Passwords do not match. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (password.length < 8) {
+      toast({
+        title: "Weak password",
+        description: "Password must be at least 8 characters long.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const success = await signup(email, password, businessName);
+      const success = await signup(email, password, businessName, fullName);
       if (success) {
         toast({
           title: "Account created!",
@@ -75,6 +96,19 @@ const Signup = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  placeholder="Enter your full name"
+                  className="h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="businessName">Business Name</Label>
                 <Input
                   id="businessName"
@@ -108,7 +142,20 @@ const Signup = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="Create a secure password"
+                  placeholder="Create a secure password (min 8 characters)"
+                  className="h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  placeholder="Confirm your password"
                   className="h-12"
                 />
               </div>

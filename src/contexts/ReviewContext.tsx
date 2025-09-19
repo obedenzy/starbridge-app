@@ -6,6 +6,7 @@ export interface Review {
   rating: number;
   name: string;
   email: string;
+  subject: string;
   comment: string;
   businessId: string;
   createdAt: string;
@@ -26,6 +27,7 @@ export interface BusinessSettings {
 export interface User {
   id: string;
   email: string;
+  fullName: string;
   businessName: string;
   businessAccountId: string;
   createdAt: string;
@@ -35,7 +37,7 @@ interface ReviewContextType {
   // Authentication
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, businessName: string) => Promise<boolean>;
+  signup: (email: string, password: string, businessName: string, fullName: string) => Promise<boolean>;
   logout: () => void;
   
   // Reviews
@@ -106,6 +108,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         id: sampleUserId,
         email: 'demo@business.com',
         password: 'demo123',
+        fullName: 'Demo User',
         businessName: 'Demo Restaurant',
         businessAccountId: sampleBusinessAccountId,
         createdAt: now
@@ -136,8 +139,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     
     const userData = users[email];
     if (userData && userData.password === password) {
-      setUser({ id: userData.id, email, businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt });
-      localStorage.setItem('reviewApp_user', JSON.stringify({ id: userData.id, email, businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt }));
+      setUser({ id: userData.id, email, fullName: userData.fullName || '', businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt });
+      localStorage.setItem('reviewApp_user', JSON.stringify({ id: userData.id, email, fullName: userData.fullName || '', businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt }));
       
       // Load business settings
       const savedSettings = localStorage.getItem('reviewApp_businessSettings');
@@ -153,7 +156,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     return false;
   };
 
-  const signup = async (email: string, password: string, businessName: string): Promise<boolean> => {
+  const signup = async (email: string, password: string, businessName: string, fullName: string): Promise<boolean> => {
     const savedUsers = localStorage.getItem('reviewApp_users');
     const users = savedUsers ? JSON.parse(savedUsers) : {};
     
@@ -169,6 +172,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       id: userId,
       email,
       password,
+      fullName,
       businessName,
       businessAccountId,
       createdAt: now
@@ -192,9 +196,9 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     allSettings[userId] = defaultSettings;
     localStorage.setItem('reviewApp_businessSettings', JSON.stringify(allSettings));
     
-    setUser({ id: userId, email, businessName, businessAccountId, createdAt: now });
+    setUser({ id: userId, email, fullName, businessName, businessAccountId, createdAt: now });
     setBusinessSettings(defaultSettings);
-    localStorage.setItem('reviewApp_user', JSON.stringify({ id: userId, email, businessName, businessAccountId, createdAt: now }));
+    localStorage.setItem('reviewApp_user', JSON.stringify({ id: userId, email, fullName, businessName, businessAccountId, createdAt: now }));
     
     return true;
   };

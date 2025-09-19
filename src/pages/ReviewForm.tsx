@@ -20,6 +20,7 @@ const ReviewForm = () => {
   const [rating, setRating] = useState(0);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [subject, setSubject] = useState('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -34,10 +35,20 @@ const ReviewForm = () => {
     }
   }, [businessAccountId, getBusinessByAccountId]);
 
+  const handleGoogleRedirect = () => {
+    if (business?.googleReviewUrl) {
+      window.open(business.googleReviewUrl, '_blank');
+      setIsSubmitted(true);
+    }
+  };
+
+  // Automatically redirect if rating is above threshold
   useEffect(() => {
     if (rating > 0 && business && rating >= business.threshold) {
-      setShouldRedirect(true);
-    } else {
+      if (business.googleReviewUrl) {
+        handleGoogleRedirect();
+      }
+    } else if (rating > 0) {
       setShouldRedirect(false);
     }
   }, [rating, business]);
@@ -66,6 +77,7 @@ const ReviewForm = () => {
         rating,
         name,
         email,
+        subject,
         comment,
         businessId: business.id,
         isPublic: true
@@ -87,12 +99,6 @@ const ReviewForm = () => {
     }
   };
 
-  const handleGoogleRedirect = () => {
-    if (business?.googleReviewUrl) {
-      window.open(business.googleReviewUrl, '_blank');
-      setIsSubmitted(true);
-    }
-  };
 
   if (!businessAccountId) {
     return (
@@ -176,7 +182,7 @@ const ReviewForm = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Rating Selection */}
+               {/* Rating Selection */}
               <div className="text-center">
                 <Label className="text-lg font-medium mb-4 block">How was your experience?</Label>
                 <div className="flex justify-center mb-4">
@@ -186,91 +192,74 @@ const ReviewForm = () => {
                     size="lg" 
                   />
                 </div>
-                {rating > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {rating >= 4 ? "Great! " : ""}
-                    {rating >= business.threshold && business.googleReviewUrl
-                      ? "You'll be redirected to Google to share your positive experience."
-                      : "Please tell us more about your experience below."
-                    }
+                {rating > 0 && rating >= business.threshold && (
+                  <p className="text-sm text-accent font-medium">
+                    Thank you for the great rating! You will be redirected to Google Reviews.
                   </p>
                 )}
               </div>
 
-              {/* Redirect Notice */}
-              {shouldRedirect && business.googleReviewUrl && (
-                <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 text-center">
-                  <p className="text-accent font-medium mb-2">
-                    Thank you for the great rating! 🌟
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Would you mind sharing your positive experience on Google?
-                  </p>
+              {/* Form fields for ratings below threshold */}
+              {rating > 0 && rating < business.threshold && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Your Name</Label>
+                    <Input
+                      id="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      placeholder="Enter your name"
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      placeholder="your@email.com"
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="subject">Subject</Label>
+                    <Input
+                      id="subject"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      required
+                      placeholder="Brief summary of your review"
+                      className="h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="comment">Your Review</Label>
+                    <Textarea
+                      id="comment"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                      required
+                      placeholder="Tell us about your experience..."
+                      className="min-h-[120px] resize-none"
+                    />
+                  </div>
+
                   <Button
-                    type="button"
-                    onClick={handleGoogleRedirect}
-                    className="bg-gradient-primary hover:opacity-90 text-white"
+                    type="submit"
+                    disabled={isSubmitting || rating === 0 || !name || !email || !subject || !comment}
+                    className="w-full h-12 bg-gradient-primary hover:opacity-90 text-white font-semibold shadow-glow"
                   >
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    Leave Google Review
+                    {isSubmitting ? "Submitting..." : "Submit Review"}
                   </Button>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Or continue below to leave feedback here
-                  </p>
-                </div>
+                </>
               )}
-
-              {/* Contact Information */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Your Name</Label>
-                  <Input
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    placeholder="Enter your name"
-                    className="h-12"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email (optional)</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="h-12"
-                  />
-                </div>
-              </div>
-
-              {/* Comment */}
-              <div className="space-y-2">
-                <Label htmlFor="comment">
-                  {rating >= 4 ? "What did you love about our service?" : "How can we improve?"}
-                </Label>
-                <Textarea
-                  id="comment"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder={
-                    rating >= 4 
-                      ? "Tell us what made your experience great..."
-                      : "Your feedback helps us improve our service..."
-                  }
-                  className="min-h-[100px] resize-none"
-                />
-              </div>
-
-              <Button
-                type="submit"
-                disabled={isSubmitting || rating === 0}
-                className="w-full h-12 bg-gradient-primary hover:opacity-90 text-white font-semibold shadow-glow"
-              >
-                {isSubmitting ? "Submitting..." : "Submit Review"}
-              </Button>
             </form>
           </CardContent>
         </Card>
