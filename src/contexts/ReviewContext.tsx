@@ -466,33 +466,6 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const inviteUserToBusiness = async (email: string, role: 'business_admin' | 'business_user') => {
-    if (!businessSettings) throw new Error('No business settings found');
-    
-    try {
-      const { error } = await supabase.rpc('invite_user_to_business', {
-        business_id_param: businessSettings.id,
-        email_param: email,
-        role_param: role
-      });
-      
-      if (error) throw error;
-      
-      toast({
-        title: "Success",
-        description: "User invited successfully.",
-      });
-    } catch (error: any) {
-      console.error('Error inviting user:', error);
-      toast({
-        title: "Error", 
-        description: error.message || "Failed to invite user.",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
   const createBusinessUser = async (email: string, fullName: string, role: 'business_admin' | 'business_user') => {
     if (!businessSettings) {
       throw new Error('No business settings found');

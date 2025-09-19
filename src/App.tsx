@@ -90,7 +90,7 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-function App() {
+const AppWithPasswordCheck = () => {
   const { user, requiresPasswordChange } = useReview();
 
   // Check if user needs to change password
@@ -99,37 +99,43 @@ function App() {
   }
 
   return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<AppWithSidebar><Dashboard /></AppWithSidebar>} />
+        <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
+        <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
+        <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
+        <Route path="/users" element={<AppWithSidebar><Users /></AppWithSidebar>} />
+        <Route path="/billing" element={<AppWithSidebar><Billing /></AppWithSidebar>} />
+        
+        {/* Super Admin Routes */}
+        <Route path="/super-admin/dashboard" element={<AppWithSidebar><SuperAdminDashboard /></AppWithSidebar>} />
+        <Route path="/super-admin/businesses" element={<AppWithSidebar><SuperAdminBusinesses /></AppWithSidebar>} />
+        <Route path="/super-admin/users" element={<AppWithSidebar><SuperAdminUsers /></AppWithSidebar>} />
+        <Route path="/super-admin/subscriptions" element={<AppWithSidebar><SuperAdminSubscriptions /></AppWithSidebar>} />
+        <Route path="/super-admin/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
+        <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
+        <Route path="/create-super-admin" element={<CreateSuperAdmin />} />
+        <Route path="/subscription-required" element={<SubscriptionPrompt />} />
+        <Route path="/subscription-success" element={<SubscriptionSuccess />} />
+        <Route path="/review" element={<ReviewForm />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <ReviewProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={<AppWithSidebar><Dashboard /></AppWithSidebar>} />
-              <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
-              <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
-              <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
-              <Route path="/users" element={<AppWithSidebar><Users /></AppWithSidebar>} />
-              <Route path="/billing" element={<AppWithSidebar><Billing /></AppWithSidebar>} />
-              
-              {/* Super Admin Routes */}
-              <Route path="/super-admin/dashboard" element={<AppWithSidebar><SuperAdminDashboard /></AppWithSidebar>} />
-              <Route path="/super-admin/businesses" element={<AppWithSidebar><SuperAdminBusinesses /></AppWithSidebar>} />
-              <Route path="/super-admin/users" element={<AppWithSidebar><SuperAdminUsers /></AppWithSidebar>} />
-              <Route path="/super-admin/subscriptions" element={<AppWithSidebar><SuperAdminSubscriptions /></AppWithSidebar>} />
-              <Route path="/super-admin/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
-              <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
-              <Route path="/create-super-admin" element={<CreateSuperAdmin />} />
-              <Route path="/subscription-required" element={<SubscriptionPrompt />} />
-              <Route path="/subscription-success" element={<SubscriptionSuccess />} />
-              <Route path="/review" element={<ReviewForm />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <AppWithPasswordCheck />
         </TooltipProvider>
       </ReviewProvider>
     </QueryClientProvider>
