@@ -18,15 +18,20 @@ export default function SubscriptionSuccess() {
       // Check subscription status
       await checkSubscription();
       setIsChecking(false);
-      
-      // Wait another moment to ensure subscription status is updated
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
     };
 
     verifySubscription();
-  }, [checkSubscription, navigate]);
+  }, [checkSubscription]);
+
+  // Separate effect to handle navigation when subscription status is confirmed
+  useEffect(() => {
+    if (!isChecking && subscriptionStatus?.subscribed) {
+      // Wait a moment to show success state, then navigate
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
+    }
+  }, [isChecking, subscriptionStatus, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
