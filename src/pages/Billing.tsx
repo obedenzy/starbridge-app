@@ -1,30 +1,18 @@
-import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useReview } from '@/contexts/ReviewContext';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { QRCodeGenerator } from '@/components/QRCodeGenerator';
 import { 
   Crown, 
   CreditCard, 
   RefreshCw, 
   CheckCircle2, 
   XCircle, 
-  Calendar,
-  DollarSign,
-  Building,
-  Mail,
-  IdCard,
   Target,
-  Star,
-  Link as LinkIcon,
-  QrCode,
-  Save
+  Building
 } from 'lucide-react';
 
 const Billing = () => {
@@ -35,14 +23,10 @@ const Billing = () => {
     userRole, 
     createCheckout, 
     openCustomerPortal,
-    checkSubscription,
-    updateBusinessSettings
+    checkSubscription
   } = useReview();
   const { toast } = useToast();
 
-  // Review settings state
-  const [reviewThreshold, setReviewThreshold] = useState(businessSettings?.review_threshold || 4);
-  const [googleReviewUrl, setGoogleReviewUrl] = useState(businessSettings?.google_review_url || '');
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -68,28 +52,14 @@ const Billing = () => {
     }
   };
 
-  const handleSaveReviewSettings = () => {
-    updateBusinessSettings({
-      review_threshold: reviewThreshold,
-      google_review_url: googleReviewUrl.trim()
-    });
-    
-    toast({
-      title: "Review settings saved",
-      description: "Your review settings have been updated successfully.",
-    });
-  };
 
-  const previewUrl = businessSettings?.public_path 
-    ? `${window.location.origin}/review?business=${businessSettings.public_path}`
-    : '';
 
   return (
     <div className="p-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground mb-2">Billing & Subscription</h1>
         <p className="text-muted-foreground">
-          Manage your subscription, billing information, and review settings.
+          Manage your subscription and billing information.
         </p>
       </div>
 
@@ -194,109 +164,6 @@ const Billing = () => {
         </Card>
       </div>
 
-      <Separator />
-
-      {/* Review Settings */}
-      <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Star className="h-5 w-5 text-accent" />
-            Review Settings
-          </CardTitle>
-          <CardDescription>
-            Configure your review collection preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="reviewThreshold">Rating Threshold</Label>
-                <Input
-                  id="reviewThreshold"
-                  type="number"
-                  min="1"
-                  max="5"
-                  value={reviewThreshold}
-                  onChange={(e) => setReviewThreshold(parseInt(e.target.value) || 4)}
-                  placeholder="4"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Reviews with {reviewThreshold}+ stars will be sent to Google Reviews
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="googleReviewUrl">Google Review URL</Label>
-                <Input
-                  id="googleReviewUrl"
-                  type="url"
-                  value={googleReviewUrl}
-                  onChange={(e) => setGoogleReviewUrl(e.target.value)}
-                  placeholder="https://maps.google.com/..."
-                />
-                <p className="text-xs text-muted-foreground">
-                  Customers with high ratings will be redirected here
-                </p>
-              </div>
-
-              <Button 
-                onClick={handleSaveReviewSettings}
-                className="w-full bg-gradient-primary hover:opacity-90 text-white"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Review Settings
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Preview URL QR Code</Label>
-                {previewUrl ? (
-                  <div className="space-y-3">
-                    <div className="p-4 border rounded-lg bg-background">
-                      <QRCodeGenerator 
-                        text={previewUrl} 
-                        size={150}
-                        className="mx-auto"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">Share this URL with customers:</p>
-                      <div className="flex gap-2">
-                        <Input
-                          value={previewUrl}
-                          readOnly
-                          className="bg-muted/50 text-xs"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(previewUrl);
-                            toast({ title: "URL copied to clipboard" });
-                          }}
-                        >
-                          <LinkIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center p-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
-                    <QrCode className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      QR code will appear here once your business is set up
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Separator />
 
       {/* Business Pro Plan Features */}
       <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
