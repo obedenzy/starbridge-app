@@ -13,7 +13,7 @@ export default function SubscriptionSuccess() {
   useEffect(() => {
     const verifySubscription = async () => {
       let attempts = 0;
-      const maxAttempts = 8; // Try for up to 16 seconds
+      const maxAttempts = 15; // Try for up to 30 seconds
       
       while (attempts < maxAttempts) {
         attempts++;
@@ -29,20 +29,24 @@ export default function SubscriptionSuccess() {
         
         // Check if subscription is now active
         if (result?.subscribed) {
-          console.log('Subscription verified successfully');
+          console.log('Subscription verified successfully - redirecting to dashboard');
           setIsChecking(false);
-          // Navigate to dashboard immediately
+          
+          // Add a small delay to ensure UI updates, then redirect
           setTimeout(() => {
-            navigate('/dashboard');
-          }, 1500);
+            navigate('/dashboard', { replace: true });
+          }, 1000);
           return;
         }
         
-        console.log('Subscription not yet active, retrying...');
+        console.log('Subscription not yet active, retrying in 2 seconds...');
       }
       
-      console.log('Max verification attempts reached, assuming subscription will be processed');
+      console.log('Max verification attempts reached, redirecting to dashboard anyway');
       setIsChecking(false);
+      setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 1000);
     };
 
     verifySubscription();

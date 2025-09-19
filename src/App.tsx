@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import ReviewForm from "./pages/ReviewForm";
 import Reviews from "./pages/Reviews";
+import Billing from "./pages/Billing";
 import CreateSuperAdmin from "./pages/CreateSuperAdmin";
 import NotFound from "./pages/NotFound";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
@@ -62,15 +63,15 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
       return <Navigate to="/dashboard" replace />;
     }
     
-    // Skip subscription check for subscription-related routes to prevent redirect loops
-    const subscriptionRoutes = ['/subscription-required', '/subscription-success'];
-    const isSubscriptionRoute = subscriptionRoutes.includes(location.pathname);
+    // Skip subscription check for subscription-related routes and billing page to prevent redirect loops
+    const exemptRoutes = ['/subscription-required', '/subscription-success', '/billing'];
+    const isExemptRoute = exemptRoutes.includes(location.pathname);
     
     // Check subscription for business users trying to access protected routes
-    if (!isSubscriptionRoute) {
-      // Only redirect if subscription check is complete and user is definitely not subscribed
-      if (subscriptionStatus !== null && !subscriptionStatus.subscribed) {
-        console.log('Business user without subscription, redirecting to subscription prompt');
+    if (!isExemptRoute && subscriptionStatus !== null) {
+      // Only redirect if subscription status is loaded and user is definitely not subscribed
+      if (!subscriptionStatus.subscribed) {
+        console.log('Business user without active subscription, redirecting to subscription prompt');
         return <Navigate to="/subscription-required" replace />;
       }
     }
@@ -106,6 +107,7 @@ const App = () => (
             <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
             <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
+            <Route path="/billing" element={<AppWithSidebar><Billing /></AppWithSidebar>} />
             
             {/* Super Admin Routes */}
             <Route path="/super-admin/dashboard" element={<AppWithSidebar><SuperAdminDashboard /></AppWithSidebar>} />

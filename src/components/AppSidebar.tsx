@@ -7,7 +7,8 @@ import {
   Star,
   User,
   Home,
-  LogOut
+  LogOut,
+  CreditCard
 } from "lucide-react";
 
 import {
@@ -28,6 +29,7 @@ import { useReview } from "@/contexts/ReviewContext";
 const menuItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Reviews", url: "/reviews", icon: MessageSquare },
+  { title: "Billing", url: "/billing", icon: CreditCard },
   { title: "Business Settings", url: "/settings", icon: Settings },
   { title: "Profile", url: "/profile", icon: User },
 ];
