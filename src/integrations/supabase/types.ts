@@ -156,9 +156,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_super_admin_role: {
+        Args: { user_uuid: string }
+        Returns: string
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_users_with_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
       }
       has_role: {
         Args: {
