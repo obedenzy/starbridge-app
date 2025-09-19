@@ -1,1 +1,4 @@
 project_id = "jkjcssajwfulkthhritq"
+
+[functions.send-user-credentials]
+verify_jwt = false

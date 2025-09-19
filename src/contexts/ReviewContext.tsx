@@ -505,6 +505,10 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error('No business settings found');
     }
 
+    if (!user?.email) {
+      throw new Error('Admin user email not found');
+    }
+
     // Generate temporary password
     const tempPassword = Math.random().toString(36).slice(-10).toUpperCase();
 
@@ -523,11 +527,44 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error(error.message || 'Failed to create business user');
     }
 
-    toast({
-      title: "Success",
-      description: `User created successfully! Temporary password: ${tempPassword}`,
-      duration: 10000,
-    });
+    // Send email notifications
+    try {
+      console.log('Sending user credentials emails...');
+      const emailResult = await supabase.functions.invoke('send-user-credentials', {
+        body: {
+          userEmail: email,
+          userName: fullName,
+          tempPassword,
+          businessName: businessSettings.business_name,
+          adminEmail: user.email,
+          adminName: user.user_metadata?.full_name || 'Admin'
+        }
+      });
+
+      if (emailResult.error) {
+        console.error('Error sending emails:', emailResult.error);
+        // Don't throw error for email failure, just log it
+        toast({
+          title: "User Created",
+          description: `User created successfully! Note: Email notification failed. Temporary password: ${tempPassword}`,
+          duration: 15000,
+        });
+      } else {
+        console.log('Emails sent successfully:', emailResult.data);
+        toast({
+          title: "User Created Successfully",
+          description: `${fullName} has been added and notified via email. Temporary password: ${tempPassword}`,
+          duration: 12000,
+        });
+      }
+    } catch (emailError) {
+      console.error('Failed to send emails:', emailError);
+      toast({
+        title: "User Created",
+        description: `User created successfully! Note: Email notification failed. Temporary password: ${tempPassword}`,
+        duration: 15000,
+      });
+    }
 
     return { ...data, tempPassword };
   };

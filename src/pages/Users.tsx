@@ -131,12 +131,36 @@ const Users = () => {
 
     setCreateLoading(true);
     try {
-      await createBusinessUser(createEmail, createName, createRole);
+      const result = await createBusinessUser(createEmail, createName, createRole);
+      
+      // Show temporary password in a more prominent way
+      if (result?.tempPassword) {
+        toast({
+          title: "🎉 User Created Successfully!",
+          description: `${createName} has been added to your business and notified via email.`,
+          duration: 8000,
+        });
+        
+        // Show password in a separate toast for emphasis
+        setTimeout(() => {
+          toast({
+            title: "📋 Temporary Password",
+            description: `Please share this with ${createName}: ${result.tempPassword}`,
+            duration: 15000,
+          });
+        }, 1000);
+      }
+      
       setCreateDialogOpen(false);
       setCreateEmail('');
       setCreateName('');
       setCreateRole('business_user');
-      await loadBusinessUsers(); // Refresh the list
+      
+      // Force refresh the user list
+      setTimeout(() => {
+        loadBusinessUsers();
+      }, 1000);
+      
     } catch (error: any) {
       toast({
         title: "Error",
