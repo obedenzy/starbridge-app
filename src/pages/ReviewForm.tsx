@@ -107,10 +107,23 @@ const ReviewForm = () => {
         title: "Review submitted!",
         description: "Thank you for your feedback! Confirmation emails have been sent.",
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Review submission error:', error);
+      
+      // Handle specific validation errors
+      let errorMessage = "Failed to submit review. Please try again.";
+      
+      if (error?.message?.includes('Rate limit exceeded')) {
+        errorMessage = "You've submitted too many reviews recently. Please wait before submitting another review.";
+      } else if (error?.message?.includes('only submit one review per business per day')) {
+        errorMessage = "You can only submit one review per business per day. Please try again tomorrow.";
+      } else if (error?.message?.includes('business_id')) {
+        errorMessage = "This business is currently not accepting reviews.";
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to submit review. Please try again.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
