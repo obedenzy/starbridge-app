@@ -173,7 +173,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         
         setReviews(reviewsData || []);
 
-        // Determine redirect path based on business status and reviews
+        // Note: Final redirect path determination will happen after subscription check
+        // This is just the initial assessment
         if (businessData.status === 'inactive' && (!roleData || roleData.role === 'business_user')) {
           const reviewCount = reviewsData?.length || 0;
           if (reviewCount === 0) {
@@ -190,7 +191,30 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       const shouldCheckSubscription = !superAdminEmails.includes(userEmail || '') && 
                                       (!roleData || roleData.role === 'business_user');
       if (shouldCheckSubscription) {
-        await checkSubscription();
+        console.log('Checking subscription for business user...');
+        const subscriptionResult = await checkSubscription();
+        console.log('Subscription check result:', subscriptionResult);
+        
+    // If we have an active subscription, reload business settings to get updated data
+        if (subscriptionResult?.subscribed) {
+          console.log('Active subscription detected, reloading business settings...');
+          const { data: updatedBusinessData } = await supabase
+            .from('business_settings')
+            .select('*')
+            .eq('user_id', userId)
+            .single();
+          
+          if (updatedBusinessData) {
+            setBusinessSettings(updatedBusinessData);
+            console.log('Updated business settings:', updatedBusinessData);
+            
+            // Clear redirect path if business is now active
+            if (updatedBusinessData.status === 'active') {
+              console.log('Business is now active, clearing redirect path');
+              setRedirectPath(null);
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -201,11 +225,14 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     if (!session) return null;
     
     try {
+      console.log('Checking subscription status...');
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
+
+      console.log('Subscription check response:', { data, error });
 
       if (error) {
         console.error('Error checking subscription:', error);
@@ -214,21 +241,33 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         return defaultStatus;
       }
 
-      setSubscriptionStatus(data);
+      // Update subscription status
+      const subscriptionData = {
+        subscribed: data.subscribed,
+        product_id: data.product_id || null,
+        subscription_end: data.subscription_end || null
+      };
+      setSubscriptionStatus(subscriptionData);
       
-      // Update business settings status based on subscription
-      if (businessSettings && data.subscribed !== (businessSettings.status === 'active')) {
-        const { error: updateError } = await supabase
-          .from('business_settings')
-          .update({ status: data.subscribed ? 'active' : 'inactive' })
-          .eq('user_id', user?.id);
+      // If subscription is active, update business settings and clear redirect path
+      if (data.subscribed && data.business_status === 'active') {
+        console.log('Active subscription found, updating business settings...');
         
-        if (!updateError) {
-          setBusinessSettings(prev => prev ? { ...prev, status: data.subscribed ? 'active' : 'inactive' } : null);
+        // Update local business settings state
+        if (businessSettings) {
+          setBusinessSettings(prev => prev ? { 
+            ...prev, 
+            status: 'active',
+            subscription_status: data.subscription_status || 'active',
+            subscription_end_date: data.subscription_end
+          } : null);
         }
+        
+        // Clear redirect path since subscription is now active
+        setRedirectPath(null);
       }
       
-      return data;
+      return subscriptionData;
     } catch (error) {
       console.error('Error in checkSubscription:', error);
       const defaultStatus = { subscribed: false, product_id: null, subscription_end: null };
