@@ -71,9 +71,7 @@ serve(async (req) => {
 
     const origin = req.headers.get("origin") || "http://localhost:3000";
     
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+    const sessionParams: any = {
       line_items: [
         {
           price: "price_1S956JEsJSpdVJsRmkDeoO9w", // Business subscription price
@@ -87,7 +85,16 @@ serve(async (req) => {
         user_id: user.id,
         business_id: businessData.id,
       },
-    });
+    };
+
+    // Only include customer OR customer_email, not both
+    if (customerId) {
+      sessionParams.customer = customerId;
+    } else {
+      sessionParams.customer_email = user.email;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     logStep("Checkout session created", { sessionId: session.id, url: session.url });
 
