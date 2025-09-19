@@ -103,16 +103,16 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: userData, error: userError } = await supabase.auth.getUser();
       console.log('User data:', userData, 'User error:', userError);
       
-      // Check if user email is a known super admin
+      // Check if user is a super admin by email
       const superAdminEmails = ['admin@platform.com', 'superadmin@platform.com'];
       const userEmail = userData?.user?.email;
       
       console.log('Checking if user email is super admin:', userEmail);
       console.log('Available super admin emails:', superAdminEmails);
       
-      // TEMPORARY: Force super admin role for testing - replace this with actual email check
-      if (userEmail) {
-        console.log('TEMPORARY: Setting user as super admin for testing');
+      // Check if user email is in super admin list
+      if (userEmail && superAdminEmails.includes(userEmail)) {
+        console.log('User is super admin based on email');
         setUserRole('super_admin');
         
         // Load profile for super admin

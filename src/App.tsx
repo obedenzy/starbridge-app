@@ -21,17 +21,18 @@ import SuperAdminBusinesses from "./pages/SuperAdminBusinesses";
 import SuperAdminUsers from "./pages/SuperAdminUsers";
 import { SuperAdminSidebar } from "@/components/SuperAdminSidebar";
 import { SuperAdminSubscriptions } from "@/components/SuperAdminSubscriptions";
+import { SubscriptionPrompt } from "@/components/SubscriptionPrompt";
 import { useReview } from "@/contexts/ReviewContext";
 import { Navigate, useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
 const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
-  const { userRole } = useReview();
+  const { userRole, subscriptionStatus } = useReview();
   const location = useLocation();
   
   // Debug logging
-  console.log('AppWithSidebar - userRole:', userRole, 'pathname:', location.pathname);
+  console.log('AppWithSidebar - userRole:', userRole, 'pathname:', location.pathname, 'subscription:', subscriptionStatus);
   
   // Always call hooks first before any conditional returns
   const sidebarComponent = userRole === 'super_admin' ? <SuperAdminSidebar /> : <AppSidebar />;
@@ -58,6 +59,14 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
     if (location.pathname.startsWith('/super-admin/')) {
       console.log('Redirecting business user from super admin routes to /dashboard');
       return <Navigate to="/dashboard" replace />;
+    }
+    
+    // Check subscription for business users trying to access dashboard
+    if (subscriptionStatus !== null && location.pathname !== '/subscription-required') {
+      if (!subscriptionStatus.subscribed) {
+        console.log('Business user without subscription, redirecting to subscription prompt');
+        return <Navigate to="/subscription-required" replace />;
+      }
     }
   }
   
@@ -100,6 +109,7 @@ const App = () => (
             <Route path="/super-admin/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
             <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/create-super-admin" element={<CreateSuperAdmin />} />
+            <Route path="/subscription-required" element={<SubscriptionPrompt />} />
             <Route path="/review" element={<ReviewForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

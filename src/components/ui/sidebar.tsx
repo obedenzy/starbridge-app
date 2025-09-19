@@ -69,7 +69,7 @@ const SidebarProvider = React.forwardRef<
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
-    const isMobile = false; // Simple mobile detection placeholder
+    const isMobile = window.innerWidth < 768; // Proper mobile detection
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open)
   }, [setOpen, setOpenMobile])
 
@@ -90,17 +90,29 @@ const SidebarProvider = React.forwardRef<
   // This makes it easier to style the sidebar with Tailwind classes.
   const state = open ? "expanded" : "collapsed"
 
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const mql = window.matchMedia(`(max-width: 767px)`);
+    const onChange = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    mql.addEventListener("change", onChange);
+    setIsMobile(window.innerWidth < 768);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
   const contextValue = React.useMemo<SidebarContext>(
     () => ({
       state,
       open,
       setOpen,
-      isMobile: false, // We'll implement mobile detection if needed
+      isMobile,
       openMobile,
       setOpenMobile,
       toggleSidebar,
     }),
-    [state, open, setOpen, openMobile, setOpenMobile, toggleSidebar]
+    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
   )
 
   return (
