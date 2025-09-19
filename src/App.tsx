@@ -20,6 +20,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminBusinesses from "./pages/SuperAdminBusinesses";
 import SuperAdminUsers from "./pages/SuperAdminUsers";
 import { SuperAdminSidebar } from "@/components/SuperAdminSidebar";
+import { SuperAdminSubscriptions } from "@/components/SuperAdminSubscriptions";
 import { useReview } from "@/contexts/ReviewContext";
 import { Navigate, useLocation } from "react-router-dom";
 
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/super-admin/dashboard" element={<AppWithSidebar><SuperAdminDashboard /></AppWithSidebar>} />
             <Route path="/super-admin/businesses" element={<AppWithSidebar><SuperAdminBusinesses /></AppWithSidebar>} />
             <Route path="/super-admin/users" element={<AppWithSidebar><SuperAdminUsers /></AppWithSidebar>} />
+            <Route path="/super-admin/subscriptions" element={<AppWithSidebar><SuperAdminSubscriptions /></AppWithSidebar>} />
             <Route path="/super-admin/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
             <Route path="/super-admin/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/create-super-admin" element={<CreateSuperAdmin />} />

@@ -7,7 +7,8 @@ import {
   Settings, 
   User,
   LogOut,
-  Shield
+  Shield,
+  CreditCard
 } from "lucide-react";
 
 import {
@@ -29,7 +30,7 @@ const menuItems = [
   { title: "Dashboard", url: "/super-admin/dashboard", icon: BarChart3 },
   { title: "Business Accounts", url: "/super-admin/businesses", icon: Building2 },
   { title: "Business Users", url: "/super-admin/users", icon: Users },
-  { title: "Settings", url: "/super-admin/settings", icon: Settings },
+  { title: "Subscriptions", url: "/super-admin/subscriptions", icon: CreditCard },
   { title: "Profile", url: "/super-admin/profile", icon: User },
 ];
 

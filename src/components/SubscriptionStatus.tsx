@@ -65,7 +65,7 @@ export function SubscriptionStatus() {
           ) : (
             <Button onClick={createCheckout} className="flex items-center gap-2">
               <Crown className="h-4 w-4" />
-              Upgrade to Pro ($29.99/month)
+              Upgrade to Pro ($250/month)
             </Button>
           )}
         </div>
