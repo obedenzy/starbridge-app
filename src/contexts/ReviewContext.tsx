@@ -657,6 +657,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
           setBusinessSettings(null);
           setReviews([]);
           setUserRole(null);
+          setSubscriptionStatus(null);
         }
       }
     );
@@ -668,6 +669,16 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (session?.user) {
         loadUserData(session.user.id);
+        
+        // Immediately check subscription status on page load for existing sessions
+        setTimeout(async () => {
+          try {
+            console.log('Immediate subscription check on page load...');
+            await checkSubscription();
+          } catch (error) {
+            console.error('Error checking subscription on page load:', error);
+          }
+        }, 500); // Small delay to ensure user data is loaded first
       }
     });
 
