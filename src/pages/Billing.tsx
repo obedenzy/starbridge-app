@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +13,10 @@ import {
   CheckCircle2, 
   XCircle, 
   Target,
-  Building
+  Building,
+  Receipt,
+  ExternalLink,
+  Download
 } from 'lucide-react';
 
 const Billing = () => {
@@ -23,9 +27,42 @@ const Billing = () => {
     userRole, 
     createCheckout, 
     openCustomerPortal,
-    checkSubscription
+    checkSubscription,
+    getInvoices
   } = useReview();
   const { toast } = useToast();
+  const [invoices, setInvoices] = useState<any[]>([]);
+  const [loadingInvoices, setLoadingInvoices] = useState(true);
+
+  // Auto-refresh subscription status
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      checkSubscription();
+    }, 60000); // Refresh every minute
+
+    return () => clearInterval(refreshInterval);
+  }, [checkSubscription]);
+
+  // Load invoices
+  useEffect(() => {
+    const loadInvoices = async () => {
+      setLoadingInvoices(true);
+      try {
+        const invoiceData = await getInvoices();
+        setInvoices(invoiceData);
+      } catch (error) {
+        console.error('Error loading invoices:', error);
+      } finally {
+        setLoadingInvoices(false);
+      }
+    };
+
+    if (user && subscriptionStatus?.subscribed) {
+      loadInvoices();
+    } else {
+      setLoadingInvoices(false);
+    }
+  }, [user, subscriptionStatus?.subscribed, getInvoices]);
 
 
   if (!user) {
@@ -205,6 +242,79 @@ const Billing = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Invoice History */}
+      {subscriptionStatus?.subscribed && (
+        <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-accent" />
+              Invoice History
+            </CardTitle>
+            <CardDescription>
+              Your recent billing history and invoices
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingInvoices ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : invoices.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No invoices found</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {invoices.map((invoice) => (
+                  <div key={invoice.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-card/50">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="font-medium text-foreground">
+                          {invoice.number || `Invoice #${invoice.id.slice(-8)}`}
+                        </span>
+                        <Badge variant={invoice.status === 'paid' ? 'default' : invoice.status === 'open' ? 'secondary' : 'destructive'}>
+                          {invoice.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{invoice.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(invoice.created * 1000).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg font-semibold">
+                        ${(invoice.amount_paid / 100).toFixed(2)}
+                      </span>
+                      <div className="flex gap-2">
+                        {invoice.hosted_invoice_url && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(invoice.hosted_invoice_url, '_blank')}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {invoice.invoice_pdf && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(invoice.invoice_pdf, '_blank')}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Separator />
 

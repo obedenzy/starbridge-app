@@ -58,17 +58,18 @@ interface ReviewContextType {
   getBusinessByAccountId: (accountId: string) => Promise<BusinessSettings | null>;
   getReviewsByBusiness: (businessId: string) => Promise<Review[]>;
   changePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
-  checkSubscription: () => Promise<{ subscribed: boolean; product_id?: string | null; subscription_end?: string | null } | null>;
-  createCheckout: () => Promise<void>;
-  openCustomerPortal: () => Promise<void>;
-  getAnalytics: () => Promise<{
-    totalReviews: number;
-    averageRating: number;
-    ratingDistribution: { rating: number; count: number }[];
-    recentReviews: Review[];
-  }>;
-  // Super admin functions
-  getAllBusinessAccounts: () => Promise<BusinessSettings[]>;
+   checkSubscription: () => Promise<{ subscribed: boolean; product_id?: string | null; subscription_end?: string | null } | null>;
+   createCheckout: () => Promise<void>;
+   openCustomerPortal: () => Promise<void>;
+   getInvoices: () => Promise<any[]>;
+   getAnalytics: () => Promise<{
+     totalReviews: number;
+     averageRating: number;
+     ratingDistribution: { rating: number; count: number }[];
+     recentReviews: Review[];
+   }>;
+   // Super admin functions
+   getAllBusinessAccounts: () => Promise<BusinessSettings[]>;
   getAllUsers: () => Promise<Profile[]>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<{ error: AuthError | null }>;
   updateBusinessStatus: (businessId: string, status: string) => Promise<void>;
@@ -354,6 +355,24 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error('Error opening customer portal:', error);
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
+    }
+  };
+
+  const getInvoices = async () => {
+    if (!user) return [];
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-invoices');
+      
+      if (error) {
+        console.error('Get invoices error:', error);
+        return [];
+      }
+      
+      return data?.invoices || [];
+    } catch (error: any) {
+      console.error('Get invoices error:', error);
+      return [];
     }
   };
 
@@ -711,9 +730,10 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       getBusinessByAccountId,
       getReviewsByBusiness,
       changePassword,
-      checkSubscription,
-      createCheckout,
-      openCustomerPortal,
+    checkSubscription,
+    createCheckout,
+    openCustomerPortal,
+    getInvoices,
       getAnalytics,
       getAllBusinessAccounts,
       getAllUsers,
