@@ -48,8 +48,8 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const success = await signup(email, password, businessName, fullName);
-      if (success) {
+      const { error } = await signup(email, password, businessName);
+      if (!error) {
         toast({
           title: "Account created!",
           description: "Welcome to ReviewFlow. Your account has been created successfully.",

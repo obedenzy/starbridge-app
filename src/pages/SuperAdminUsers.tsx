@@ -30,7 +30,7 @@ interface UserData {
   full_name: string;
   email: string;
   business_name: string;
-  created_at: string;
+  created_at?: string;
   last_login: string | null;
 }
 
@@ -55,7 +55,7 @@ export default function SuperAdminUsers() {
   const loadUsers = async () => {
     try {
       const data = await getAllUsers();
-      setUsers(data.map(u => ({ ...u, created_at: u.created_at || new Date().toISOString() })));
+      setUsers(data as UserData[]);
     } catch (error) {
       console.error('Error loading users:', error);
       toast({
@@ -194,7 +194,7 @@ export default function SuperAdminUsers() {
                   </TableCell>
                   <TableCell>{userData.business_name}</TableCell>
                   <TableCell>
-                    {new Date(userData.created_at).toLocaleDateString()}
+                    {userData.created_at ? new Date(userData.created_at).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell>
                     {userData.last_login 

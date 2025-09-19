@@ -24,13 +24,15 @@ import { useToast } from "@/hooks/use-toast";
 
 interface BusinessAccount {
   id: string;
+  user_id: string;
   business_name: string;
   contact_email: string;
   status: string;
-  created_at: string;
+  created_at?: string;
   updated_at?: string;
   public_path: string;
   review_threshold: number;
+  google_review_url?: string;
 }
 
 export default function SuperAdminBusinesses() {
@@ -52,7 +54,7 @@ export default function SuperAdminBusinesses() {
   const loadBusinesses = async () => {
     try {
       const data = await getAllBusinessAccounts();
-      setBusinesses(data.map(b => ({ ...b, updated_at: b.updated_at || b.created_at })));
+      setBusinesses(data as BusinessAccount[]);
     } catch (error) {
       console.error('Error loading businesses:', error);
       toast({
@@ -194,7 +196,7 @@ export default function SuperAdminBusinesses() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(business.created_at).toLocaleDateString()}
+                    {business.created_at ? new Date(business.created_at).toLocaleDateString() : 'N/A'}
                   </TableCell>
                   <TableCell>{business.review_threshold}</TableCell>
                   <TableCell>

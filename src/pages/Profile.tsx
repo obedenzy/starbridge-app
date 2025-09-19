@@ -58,8 +58,8 @@ const Profile = () => {
     }
 
     try {
-      const success = await changePassword(currentPassword, newPassword);
-      if (success) {
+      const { error } = await changePassword(newPassword);
+      if (!error) {
         toast({
           title: "Password changed",
           description: "Your password has been updated successfully.",

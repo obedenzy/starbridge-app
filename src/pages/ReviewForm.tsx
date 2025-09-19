@@ -79,12 +79,12 @@ const ReviewForm = () => {
         business_id: business.id
       });
 
-      if (result.success && result.data) {
+      if (result.success) {
         // Send email notifications
         try {
           const { error: emailError } = await supabase.functions.invoke('send-review-notification', {
             body: {
-              reviewId: result.data.id,
+              // reviewId: result.data?.id,
               businessId: business.id,
               customerName: name,
               customerEmail: email,
