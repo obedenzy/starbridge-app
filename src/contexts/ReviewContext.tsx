@@ -47,6 +47,8 @@ interface ReviewContextType {
   businessSettings: BusinessSettings | null;
   updateBusinessSettings: (settings: Partial<BusinessSettings>) => void;
   getBusinessByPath: (path: string) => BusinessSettings | null;
+  getBusinessByAccountId: (accountId: string) => BusinessSettings | null;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   
   // Analytics
   getAnalytics: () => {
@@ -205,6 +207,41 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     ) as BusinessSettings || null;
   };
 
+  const getBusinessByAccountId = (accountId: string): BusinessSettings | null => {
+    const savedUsers = localStorage.getItem('reviewApp_users');
+    if (!savedUsers) return null;
+    
+    const users = JSON.parse(savedUsers);
+    const userEntry = Object.values(users).find((user: any) => user.businessAccountId === accountId) as any;
+    
+    if (!userEntry) return null;
+    
+    const savedSettings = localStorage.getItem('reviewApp_businessSettings');
+    if (!savedSettings) return null;
+    
+    const allSettings = JSON.parse(savedSettings);
+    return allSettings[userEntry.id] || null;
+  };
+
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    const savedUsers = localStorage.getItem('reviewApp_users');
+    const users = savedUsers ? JSON.parse(savedUsers) : {};
+    
+    const userData = users[user.email];
+    if (!userData || userData.password !== currentPassword) {
+      return false; // Current password is incorrect
+    }
+    
+    // Update password
+    userData.password = newPassword;
+    users[user.email] = userData;
+    localStorage.setItem('reviewApp_users', JSON.stringify(users));
+    
+    return true;
+  };
+
   // Analytics functions
   const getAnalytics = () => {
     if (!user) return { totalReviews: 0, averageRating: 0, ratingDistribution: {}, recentReviews: [] };
@@ -248,6 +285,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         businessSettings,
         updateBusinessSettings,
         getBusinessByPath,
+        getBusinessByAccountId,
+        changePassword,
         getAnalytics
       }}
     >

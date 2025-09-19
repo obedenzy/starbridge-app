@@ -11,8 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Star, ExternalLink, CheckCircle } from 'lucide-react';
 
 const ReviewForm = () => {
-  const { businessPath } = useParams<{ businessPath: string }>();
-  const { getBusinessByPath, addReview } = useReview();
+  const { businessAccountId } = useParams<{ businessAccountId: string }>();
+  const { getBusinessByAccountId, addReview } = useReview();
   const { toast } = useToast();
   
   const [business, setBusiness] = useState(null);
@@ -25,11 +25,11 @@ const ReviewForm = () => {
   const [shouldRedirect, setShouldRedirect] = useState(false);
 
   useEffect(() => {
-    if (businessPath) {
-      const foundBusiness = getBusinessByPath(businessPath);
+    if (businessAccountId) {
+      const foundBusiness = getBusinessByAccountId(businessAccountId);
       setBusiness(foundBusiness);
     }
-  }, [businessPath, getBusinessByPath]);
+  }, [businessAccountId, getBusinessByAccountId]);
 
   useEffect(() => {
     if (rating > 0 && business && rating >= business.threshold) {
@@ -134,7 +134,7 @@ const ReviewForm = () => {
 
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-white/10 backdrop-blur-sm p-3 rounded-2xl">
@@ -196,7 +196,7 @@ const ReviewForm = () => {
               )}
 
               {/* Contact Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Your Name</Label>
                   <Input

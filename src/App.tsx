@@ -49,7 +49,7 @@ const App = () => (
             <Route path="/profile" element={<AppWithSidebar><Profile /></AppWithSidebar>} />
             <Route path="/settings" element={<AppWithSidebar><Settings /></AppWithSidebar>} />
             <Route path="/reviews" element={<AppWithSidebar><Reviews /></AppWithSidebar>} />
-            <Route path="/review/:businessPath" element={<ReviewForm />} />
+            <Route path="/review/:businessAccountId" element={<ReviewForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
