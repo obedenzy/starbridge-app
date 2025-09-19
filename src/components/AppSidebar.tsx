@@ -34,7 +34,7 @@ const menuItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
-  const { user, logout, businessSettings } = useReview();
+  const { user, logout, businessSettings, profile } = useReview();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
@@ -56,7 +56,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div>
               <h2 className="font-semibold text-sm truncate">
-                {businessSettings?.businessName || user.businessName}
+                {businessSettings?.business_name || profile?.business_name}
               </h2>
               <p className="text-xs text-muted-foreground">Review Manager</p>
             </div>

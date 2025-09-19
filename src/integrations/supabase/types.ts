@@ -14,7 +14,110 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      business_settings: {
+        Row: {
+          business_name: string
+          contact_email: string
+          created_at: string
+          google_review_url: string | null
+          id: string
+          public_path: string | null
+          review_threshold: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_name: string
+          contact_email: string
+          created_at?: string
+          google_review_url?: string | null
+          id?: string
+          public_path?: string | null
+          review_threshold?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string
+          contact_email?: string
+          created_at?: string
+          google_review_url?: string | null
+          id?: string
+          public_path?: string | null
+          review_threshold?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          business_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_name: string
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_name?: string
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          business_id: string
+          comment: string | null
+          created_at: string
+          customer_name: string
+          id: string
+          rating: number
+          subject: string | null
+        }
+        Insert: {
+          business_id: string
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          id?: string
+          rating: number
+          subject?: string | null
+        }
+        Update: {
+          business_id?: string
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          id?: string
+          rating?: number
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

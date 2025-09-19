@@ -29,22 +29,23 @@ const ReviewForm = () => {
   useEffect(() => {
     console.log('ReviewForm mounted, businessAccountId:', businessAccountId);
     if (businessAccountId) {
-      const foundBusiness = getBusinessByAccountId(businessAccountId);
-      console.log('Found business:', foundBusiness);
-      setBusiness(foundBusiness);
+      getBusinessByAccountId(businessAccountId).then(foundBusiness => {
+        console.log('Found business:', foundBusiness);
+        setBusiness(foundBusiness);
+      });
     }
   }, [businessAccountId, getBusinessByAccountId]);
 
   const handleGoogleRedirect = () => {
-    if (business?.googleReviewUrl) {
-      window.open(business.googleReviewUrl, '_blank');
+    if (business?.google_review_url) {
+      window.open(business.google_review_url, '_blank');
       setIsSubmitted(true);
     }
   };
 
   // Automatically redirect if rating is above threshold
   useEffect(() => {
-    if (rating > 0 && business && rating >= business.threshold && business.googleReviewUrl) {
+    if (rating > 0 && business && rating >= business.review_threshold && business.google_review_url) {
       setShouldRedirect(true);
       // Small delay to allow user to see the rating before redirect
       const timer = setTimeout(() => {
@@ -70,18 +71,16 @@ const ReviewForm = () => {
       // Otherwise, save the review locally
       addReview({
         rating,
-        name,
-        email,
+        customer_name: name,
         subject,
         comment,
-        businessId: business.id,
-        isPublic: true
+        business_id: business.id
       });
 
       setIsSubmitted(true);
       toast({
         title: "Review submitted!",
-        description: business.customMessage || "Thank you for your feedback!",
+        description: "Thank you for your feedback!",
       });
     } catch (error) {
       toast({
@@ -141,9 +140,9 @@ const ReviewForm = () => {
             <CheckCircle className="w-16 h-16 mx-auto mb-4 text-success" />
             <h2 className="text-2xl font-bold mb-4 text-success">Thank You!</h2>
             <p className="text-muted-foreground mb-6">
-              {business.customMessage || "Your feedback has been submitted successfully."}
+              Your feedback has been submitted successfully.
             </p>
-            {shouldRedirect && business.googleReviewUrl && (
+            {shouldRedirect && business.google_review_url && (
               <Button 
                 onClick={handleGoogleRedirect}
                 className="bg-gradient-primary hover:opacity-90 text-white"
@@ -167,7 +166,7 @@ const ReviewForm = () => {
               <Star className="w-8 h-8 text-white" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">{business.businessName}</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">{business.business_name}</h1>
           <p className="text-white/80">We'd love to hear about your experience</p>
         </div>
 
@@ -187,7 +186,7 @@ const ReviewForm = () => {
                     size="lg" 
                   />
                 </div>
-                {rating > 0 && rating >= business.threshold && (
+                {rating > 0 && rating >= business.review_threshold && (
                   <p className="text-sm text-accent font-medium">
                     Thank you for the great rating! You will be redirected to Google Reviews.
                   </p>
@@ -195,7 +194,7 @@ const ReviewForm = () => {
               </div>
 
               {/* Form fields for ratings below threshold */}
-              {rating > 0 && rating < business.threshold && (
+              {rating > 0 && rating < business.review_threshold && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="name">Your Name</Label>

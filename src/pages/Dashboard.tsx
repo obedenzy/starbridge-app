@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 const Dashboard = () => {
-  const { user, logout, getAnalytics, businessSettings } = useReview();
+  const { user, logout, getAnalytics, businessSettings, profile } = useReview();
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -29,7 +29,7 @@ const Dashboard = () => {
     <div className="p-6 space-y-6">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-foreground mb-2">
-            Welcome back, {user.businessName}!
+            Welcome back, {profile?.business_name}!
           </h2>
           <p className="text-muted-foreground">
             Here's an overview of your review performance and recent activity.
@@ -51,7 +51,7 @@ const Dashboard = () => {
           <StatsCard
             title="This Month"
             value={analytics.recentReviews.filter(r => 
-              new Date(r.createdAt) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+              new Date(r.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
             ).length}
             icon={<TrendingUp className="w-6 h-6" />}
           />
@@ -125,11 +125,11 @@ const Dashboard = () => {
                     <div key={review.id} className="p-4 border border-border/50 rounded-lg bg-card/50">
                       <div className="flex items-start justify-between mb-2">
                         <div>
-                          <p className="font-medium text-foreground">{review.name}</p>
+                          <p className="font-medium text-foreground">{review.customer_name}</p>
                           <StarRating rating={review.rating} readonly size="sm" />
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(review.createdAt).toLocaleDateString()}
+                          {new Date(review.created_at).toLocaleDateString()}
                         </span>
                       </div>
                       {review.comment && (
@@ -166,7 +166,7 @@ const Dashboard = () => {
                   </Link>
                 </Button>
                 <Button asChild variant="outline" className="h-20">
-                  <Link to={`/review/${user.businessAccountId}`} target="_blank" className="flex flex-col items-center space-y-2">
+                  <Link to={`/review?businessAccountId=${user?.id}`} target="_blank" className="flex flex-col items-center space-y-2">
                     <Eye className="w-6 h-6" />
                     <span>Preview Form</span>
                   </Link>

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 
 const Reviews = () => {
-  const { user, getReviewsByBusiness, businessSettings, updateBusinessSettings } = useReview();
+  const { user, getReviewsByBusiness, businessSettings, updateBusinessSettings, profile } = useReview();
   const { toast } = useToast();
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,33 +31,35 @@ const Reviews = () => {
   const [sortBy, setSortBy] = useState<string>('newest');
   
   // Settings state
-  const [googleUrl, setGoogleUrl] = useState(businessSettings?.googleReviewUrl || '');
-  const [threshold, setThreshold] = useState(businessSettings?.threshold || 4);
-  const [customMessage, setCustomMessage] = useState(businessSettings?.customMessage || '');
+  const [googleUrl, setGoogleUrl] = useState(businessSettings?.google_review_url || '');
+  const [threshold, setThreshold] = useState(businessSettings?.review_threshold || 4);
 
   if (!user || !businessSettings) {
     return <Navigate to="/login" replace />;
   }
 
-  const allReviews = getReviewsByBusiness(user.id);
+  const allReviews = getReviewsByBusiness(businessSettings.id);
 
   // Filter and sort reviews
   const filteredReviews = allReviews
     .filter(review => {
-      const matchesSearch = review.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = review.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           review.comment.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          review.email.toLowerCase().includes(searchTerm.toLowerCase());
+                          review.subject.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesRating = filterRating === 'all' || review.rating.toString() === filterRating;
+      const matchesRating = filterRating === 'all' || 
+        (filterRating === 'high' && review.rating >= 4) ||
+        (filterRating === 'low' && review.rating < 4) ||
+        review.rating.toString() === filterRating;
       
       return matchesSearch && matchesRating;
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         case 'highest':
           return b.rating - a.rating;
         case 'lowest':
@@ -67,17 +69,9 @@ const Reviews = () => {
       }
     });
 
-  const getRatingColor = (rating: number) => {
-    if (rating >= 4) return 'bg-success text-success-foreground';
-    if (rating >= 3) return 'bg-warning text-warning-foreground';
-    return 'bg-destructive text-destructive-foreground';
-  };
-
   const handleSaveSettings = () => {
     updateBusinessSettings({
-      googleReviewUrl: googleUrl.trim(),
-      threshold: threshold,
-      customMessage: customMessage.trim()
+      google_review_url: googleUrl
     });
     
     toast({
@@ -86,230 +80,243 @@ const Reviews = () => {
     });
   };
 
-  const reviewUrl = `${window.location.origin}/review?businessAccountId=${user.businessAccountId}`;
-  console.log('Current user:', user);
-  console.log('Generated review URL:', reviewUrl);
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(reviewUrl);
+  const copyReviewUrl = () => {
+    const url = `${window.location.origin}/review?businessAccountId=${user.id}`;
+    navigator.clipboard.writeText(url);
     toast({
-      title: "Link copied!",
-      description: "Review form link has been copied to your clipboard.",
+      title: "URL copied",
+      description: "Review form URL has been copied to your clipboard.",
     });
+  };
+
+  const averageRating = allReviews.length > 0 
+    ? allReviews.reduce((sum, review) => sum + review.rating, 0) / allReviews.length 
+    : 0;
+
+  const ratingCounts = {
+    5: allReviews.filter(r => r.rating === 5).length,
+    4: allReviews.filter(r => r.rating === 4).length,
+    3: allReviews.filter(r => r.rating === 3).length,
+    2: allReviews.filter(r => r.rating === 2).length,
+    1: allReviews.filter(r => r.rating === 1).length,
   };
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Reviews Management</h1>
-        <p className="text-muted-foreground">
-          View and manage all reviews for {user.businessName}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Reviews Management</h1>
+          <p className="text-muted-foreground">
+            Manage customer reviews for {profile?.business_name}
+          </p>
+        </div>
       </div>
 
-      <Tabs defaultValue="reviews" className="space-y-6">
-        <TabsList>
+      <Tabs defaultValue="reviews" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
-          <TabsTrigger value="settings">Review Settings</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="share">Share & QR</TabsTrigger>
         </TabsList>
 
         <TabsContent value="reviews" className="space-y-6">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{allReviews.length}</div>
+                  <div className="text-sm text-muted-foreground">Total Reviews</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{averageRating.toFixed(1)}</div>
+                  <div className="text-sm text-muted-foreground">Average Rating</div>
+                  <StarRating rating={averageRating} readonly size="sm" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{ratingCounts[5]}</div>
+                  <div className="text-sm text-muted-foreground">5-Star Reviews</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">
+                    {allReviews.filter(r => r.rating >= 4).length}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Positive Reviews</div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Filters and Search */}
           <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Filter className="w-5 h-5 text-accent" />
-                <span>Filter Reviews</span>
+                <span>Filter & Search</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    placeholder="Search by name, email, or comment..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-12"
-                  />
+                <div className="space-y-2">
+                  <Label>Search Reviews</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name, email, or comment..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
                 </div>
                 
-                <Select value={filterRating} onValueChange={setFilterRating}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Filter by rating" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Ratings</SelectItem>
-                    <SelectItem value="5">5 Stars</SelectItem>
-                    <SelectItem value="4">4 Stars</SelectItem>
-                    <SelectItem value="3">3 Stars</SelectItem>
-                    <SelectItem value="2">2 Stars</SelectItem>
-                    <SelectItem value="1">1 Star</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest First</SelectItem>
-                    <SelectItem value="oldest">Oldest First</SelectItem>
-                    <SelectItem value="highest">Highest Rating</SelectItem>
-                    <SelectItem value="lowest">Lowest Rating</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Label>Filter by Rating</Label>
+                  <Select value={filterRating} onValueChange={setFilterRating}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All ratings" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Ratings</SelectItem>
+                      <SelectItem value="high">4-5 Stars</SelectItem>
+                      <SelectItem value="low">1-3 Stars</SelectItem>
+                      <SelectItem value="5">5 Stars</SelectItem>
+                      <SelectItem value="4">4 Stars</SelectItem>
+                      <SelectItem value="3">3 Stars</SelectItem>
+                      <SelectItem value="2">2 Stars</SelectItem>
+                      <SelectItem value="1">1 Star</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Sort by</Label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="highest">Highest Rating</SelectItem>
+                      <SelectItem value="lowest">Lowest Rating</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Reviews List */}
-          <div className="space-y-4">
-            {filteredReviews.length === 0 ? (
-              <Card className="bg-gradient-card backdrop-blur-sm border-border/50">
-                <CardContent className="p-12 text-center">
-                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
-                  <h3 className="text-xl font-semibold mb-2">No Reviews Found</h3>
+          <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5 text-accent" />
+                  <span>Customer Reviews ({filteredReviews.length})</span>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {filteredReviews.length === 0 ? (
+                <div className="text-center py-12">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">No reviews found</h3>
                   <p className="text-muted-foreground mb-6">
                     {allReviews.length === 0 
                       ? "You haven't received any reviews yet. Share your review link to get started!"
                       : "No reviews match your current filters. Try adjusting your search criteria."
                     }
                   </p>
-                  <Button onClick={() => copyToClipboard()} variant="outline">
+                  <Button onClick={copyReviewUrl} className="bg-gradient-primary hover:opacity-90 text-white">
                     <Copy className="w-4 h-4 mr-2" />
                     Copy Review Link
                   </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <p className="text-muted-foreground">
-                    Showing {filteredReviews.length} of {allReviews.length} reviews
-                  </p>
                 </div>
-
-                {filteredReviews.map((review) => (
-                  <Card key={review.id} className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover hover:shadow-elegant transition-all duration-300">
-                    <CardContent className="p-6">
+              ) : (
+                <div className="space-y-4">
+                  {filteredReviews.map((review) => (
+                    <div key={review.id} className="p-6 border border-border/50 rounded-lg bg-card/50 hover:bg-card/70 transition-colors">
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-start space-x-4">
-                          <div className="bg-primary/10 p-3 rounded-full">
-                            <User className="w-5 h-5 text-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-foreground">{review.name}</h3>
-                            {review.email && (
-                              <div className="flex items-center space-x-1 mt-1">
-                                <Mail className="w-3 h-3 text-muted-foreground" />
-                                <span className="text-sm text-muted-foreground">{review.email}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center space-x-2 mt-2">
-                              <StarRating rating={review.rating} readonly size="sm" />
-                              <Badge className={getRatingColor(review.rating)}>
-                                {review.rating} Star{review.rating !== 1 ? 's' : ''}
-                              </Badge>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <div>
+                              <h4 className="font-medium text-foreground">{review.customer_name}</h4>
+                              <p className="text-sm text-muted-foreground">Customer</p>
                             </div>
+                            <Badge variant={review.rating >= 4 ? "default" : "secondary"}>
+                              {review.rating >= 4 ? "Positive" : "Needs Attention"}
+                            </Badge>
+                          </div>
+                          <div className="mb-3">
+                            <StarRating rating={review.rating} readonly size="sm" />
                           </div>
                         </div>
-                        
-                        <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                          <Calendar className="w-4 h-4" />
-                          <span>
-                            {new Date(review.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            })}
-                          </span>
+                        <div className="text-right">
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(review.created_at).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-
-                      {review.comment && (
-                        <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border/30">
-                          <p className="text-foreground leading-relaxed">{review.comment}</p>
+                      
+                      {review.subject && (
+                        <div className="mb-3">
+                          <h5 className="font-medium text-foreground">{review.subject}</h5>
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </>
-            )}
-          </div>
+                      
+                      {review.comment && (
+                        <div className="text-muted-foreground">
+                          <p>{review.comment}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="settings" className="space-y-6">
-          {/* Review Form Link */}
-          <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <ExternalLink className="w-5 h-5 text-accent" />
-                <span>Review Form Link</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Public Review Form URL</Label>
-                <div className="flex space-x-2">
-                  <Input
-                    value={reviewUrl}
-                    readOnly
-                    className="h-12 bg-muted/50 font-mono text-sm"
-                  />
-                  <Button variant="outline" onClick={copyToClipboard}>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </Button>
-                  <Button variant="outline" onClick={() => window.open(reviewUrl, '_blank')}>
-                    <Eye className="w-4 h-4 mr-2" />
-                    Preview
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Share this URL with customers to collect reviews. This form can be accessed by anyone without logging in.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* QR Code Generator */}
-          <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <QrCode className="w-5 h-5 text-accent" />
-                <span>QR Code</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <QRCodeGenerator 
-                text={reviewUrl} 
-                size={200}
-                className="mx-auto border rounded-lg"
-              />
-            </CardContent>
-          </Card>
-
-          <Separator />
-
-          {/* Rating Threshold */}
           <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <SettingsIcon className="w-5 h-5 text-accent" />
-                <span>Rating Threshold</span>
+                <span>Review Settings</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label>Threshold Rating</Label>
-                  <div className="flex items-center space-x-2">
-                    <StarRating rating={threshold} readonly size="sm" />
-                    <span className="text-sm font-medium">({threshold} stars)</span>
-                  </div>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="googleUrl">Google Review URL</Label>
+                <Input
+                  id="googleUrl"
+                  value={googleUrl}
+                  onChange={(e) => setGoogleUrl(e.target.value)}
+                  placeholder="https://maps.google.com/..."
+                />
+                <p className="text-sm text-muted-foreground">
+                  Customers with high ratings will be redirected to this URL
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Rating Threshold: {threshold} stars</Label>
                 <Slider
                   value={[threshold]}
                   onValueChange={(value) => setThreshold(value[0])}
@@ -318,79 +325,77 @@ const Reviews = () => {
                   step={1}
                   className="w-full"
                 />
-                <div className="grid grid-cols-5 gap-2 text-xs text-muted-foreground">
-                  {[1, 2, 3, 4, 5].map((rating) => (
-                    <div key={rating} className="text-center">
-                      {rating} star{rating !== 1 ? 's' : ''}
-                    </div>
-                  ))}
+                <p className="text-sm text-muted-foreground">
+                  Reviews with {threshold} stars or higher will redirect to Google Reviews
+                </p>
+              </div>
+
+              <div className="flex justify-end">
+                <Button 
+                  onClick={handleSaveSettings}
+                  className="bg-gradient-primary hover:opacity-90 text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="share" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ExternalLink className="w-5 h-5 text-accent" />
+                  <span>Share Review Form</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Review Form URL</Label>
+                  <div className="flex space-x-2">
+                    <Input
+                      value={`${window.location.origin}/review?businessAccountId=${user.id}`}
+                      readOnly
+                      className="font-mono text-xs"
+                    />
+                    <Button variant="outline" onClick={copyReviewUrl}>
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm">
-                  <strong>How it works:</strong> Customers who rate {threshold}+ stars will be redirected to 
-                  your Google Review page (if configured). Lower ratings will be collected privately 
-                  for your internal improvement.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Google Reviews Integration */}
-          <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
-            <CardHeader>
-              <CardTitle>Google Reviews Integration</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="googleUrl">Google Review URL</Label>
-                <Input
-                  id="googleUrl"
-                  value={googleUrl}
-                  onChange={(e) => setGoogleUrl(e.target.value)}
-                  placeholder="https://g.page/your-business/review"
-                  className="h-12"
+                <div className="space-y-2">
+                  <Button asChild className="w-full bg-gradient-primary hover:opacity-90 text-white">
+                    <a 
+                      href={`${window.location.origin}/review?businessAccountId=${user.id}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Preview Review Form
+                    </a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <QrCode className="w-5 h-5 text-accent" />
+                  <span>QR Code</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <QRCodeGenerator 
+                  text={`${window.location.origin}/review?businessAccountId=${user.id}`}
+                  size={200}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Find your Google review link in Google My Business → Customers → Reviews → Get more reviews
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Custom Message */}
-          <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
-            <CardHeader>
-              <CardTitle>Thank You Message</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="customMessage">Custom Thank You Message</Label>
-                <Textarea
-                  id="customMessage"
-                  value={customMessage}
-                  onChange={(e) => setCustomMessage(e.target.value)}
-                  placeholder="Thank you for your feedback! Your review helps us improve our service."
-                  className="min-h-[100px] resize-none"
-                />
-                <p className="text-xs text-muted-foreground">
-                  This message will be displayed after customers submit their review
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <Button 
-              onClick={handleSaveSettings}
-              size="lg"
-              className="bg-gradient-primary hover:opacity-90 text-white shadow-glow"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save Settings
-            </Button>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
       </Tabs>

@@ -1,55 +1,55 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
 // Types
 export interface Review {
   id: string;
   rating: number;
-  name: string;
-  email: string;
+  customer_name: string;
   subject: string;
   comment: string;
-  businessId: string;
-  createdAt: string;
-  isPublic: boolean;
+  business_id: string;
+  created_at: string;
 }
 
 export interface BusinessSettings {
   id: string;
-  businessName: string;
-  email: string;
-  googleReviewUrl: string;
-  threshold: number; // Reviews >= threshold redirect to Google
-  customMessage: string;
-  logoUrl?: string;
-  primaryColor: string;
+  user_id: string;
+  business_name: string;
+  contact_email: string;
+  google_review_url: string;
+  review_threshold: number;
+  public_path: string;
 }
 
-export interface User {
+export interface Profile {
   id: string;
+  user_id: string;
+  full_name: string;
   email: string;
-  fullName: string;
-  businessName: string;
-  businessAccountId: string;
-  createdAt: string;
+  business_name: string;
 }
 
 interface ReviewContextType {
   // Authentication
   user: User | null;
+  session: Session | null;
+  profile: Profile | null;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, businessName: string, fullName: string) => Promise<boolean>;
   logout: () => void;
   
   // Reviews
   reviews: Review[];
-  addReview: (review: Omit<Review, 'id' | 'createdAt'>) => void;
+  addReview: (review: Omit<Review, 'id' | 'created_at'>) => Promise<void>;
   getReviewsByBusiness: (businessId: string) => Review[];
   
   // Business Settings
   businessSettings: BusinessSettings | null;
-  updateBusinessSettings: (settings: Partial<BusinessSettings>) => void;
-  getBusinessByPath: (path: string) => BusinessSettings | null;
-  getBusinessByAccountId: (accountId: string) => BusinessSettings | null;
+  updateBusinessSettings: (settings: Partial<BusinessSettings>) => Promise<void>;
+  getBusinessByPath: (path: string) => Promise<BusinessSettings | null>;
+  getBusinessByAccountId: (accountId: string) => Promise<BusinessSettings | null>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>;
   
   // Analytics
@@ -65,250 +65,246 @@ const ReviewContext = createContext<ReviewContextType | undefined>(undefined);
 
 export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [businessSettings, setBusinessSettings] = useState<BusinessSettings | null>(null);
 
-  // Load data from localStorage on mount
+  // Set up auth state listener and load data
   useEffect(() => {
-    const savedUser = localStorage.getItem('reviewApp_user');
-    const savedReviews = localStorage.getItem('reviewApp_reviews');
-    const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      setUser(userData);
-      
-      // Load business settings for this user
-      if (savedSettings) {
-        const allSettings = JSON.parse(savedSettings);
-        const userSettings = allSettings[userData.id];
-        if (userSettings) {
-          setBusinessSettings(userSettings);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          // Defer profile and business settings loading
+          setTimeout(async () => {
+            await loadUserData(session.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+          setBusinessSettings(null);
+          setReviews([]);
         }
       }
-    }
+    );
 
-    if (savedReviews) {
-      setReviews(JSON.parse(savedReviews));
-    }
-    
-    // Initialize with sample data if no users exist (for demo purposes)
-    initializeSampleData();
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        loadUserData(session.user.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const initializeSampleData = () => {
-    const savedUsers = localStorage.getItem('reviewApp_users');
-    if (!savedUsers || Object.keys(JSON.parse(savedUsers)).length === 0) {
-      // Create a sample business for demo purposes
-      const sampleUserId = 'demo-user-123';
-      const sampleBusinessAccountId = 'demo-business-456';
-      const now = new Date().toISOString();
+  const loadUserData = async (userId: string) => {
+    try {
+      // Load profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
       
-      const sampleUser = {
-        id: sampleUserId,
-        email: 'demo@business.com',
-        password: 'demo123',
-        fullName: 'Demo User',
-        businessName: 'Demo Restaurant',
-        businessAccountId: sampleBusinessAccountId,
-        createdAt: now
-      };
+      setProfile(profileData);
+
+      // Load business settings
+      const { data: businessData } = await supabase
+        .from('business_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
       
-      const users = { [sampleUser.email]: sampleUser };
-      localStorage.setItem('reviewApp_users', JSON.stringify(users));
-      
-      const sampleBusinessSettings: BusinessSettings = {
-        id: sampleUserId,
-        businessName: 'Demo Restaurant',
-        email: 'demo@business.com',
-        googleReviewUrl: 'https://maps.google.com/sample',
-        threshold: 4,
-        customMessage: 'Thank you for dining with us! Your feedback helps us serve you better.',
-        primaryColor: '#1e40af'
-      };
-      
-      const allSettings = { [sampleUserId]: sampleBusinessSettings };
-      localStorage.setItem('reviewApp_businessSettings', JSON.stringify(allSettings));
+      setBusinessSettings(businessData);
+
+      // Load reviews
+      if (businessData) {
+        const { data: reviewsData } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('business_id', businessData.id)
+          .order('created_at', { ascending: false });
+        
+        setReviews(reviewsData || []);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
     }
   };
 
   // Authentication functions
   const login = async (email: string, password: string): Promise<boolean> => {
-    const savedUsers = localStorage.getItem('reviewApp_users');
-    const users = savedUsers ? JSON.parse(savedUsers) : {};
-    
-    const userData = users[email];
-    if (userData && userData.password === password) {
-      setUser({ id: userData.id, email, fullName: userData.fullName || '', businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt });
-      localStorage.setItem('reviewApp_user', JSON.stringify({ id: userData.id, email, fullName: userData.fullName || '', businessName: userData.businessName, businessAccountId: userData.businessAccountId, createdAt: userData.createdAt }));
-      
-      // Load business settings
-      const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-      if (savedSettings) {
-        const allSettings = JSON.parse(savedSettings);
-        const userSettings = allSettings[userData.id];
-        if (userSettings) {
-          setBusinessSettings(userSettings);
-        }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        return false;
       }
+
       return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
 
   const signup = async (email: string, password: string, businessName: string, fullName: string): Promise<boolean> => {
-    const savedUsers = localStorage.getItem('reviewApp_users');
-    const users = savedUsers ? JSON.parse(savedUsers) : {};
-    
-    if (users[email]) {
-      return false; // User already exists
-    }
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+            business_name: businessName
+          }
+        }
+      });
 
-    const userId = crypto.randomUUID();
-    const businessAccountId = crypto.randomUUID();
-    const now = new Date().toISOString();
-    
-    users[email] = {
-      id: userId,
-      email,
-      password,
-      fullName,
-      businessName,
-      businessAccountId,
-      createdAt: now
-    };
-    
-    localStorage.setItem('reviewApp_users', JSON.stringify(users));
-    
-    // Create default business settings
-    const defaultSettings: BusinessSettings = {
-      id: userId,
-      businessName,
-      email,
-      googleReviewUrl: '',
-      threshold: 4,
-      customMessage: `Thank you for your feedback! Your review helps us improve our service.`,
-      primaryColor: '#1e40af'
-    };
-    
-    const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-    const allSettings = savedSettings ? JSON.parse(savedSettings) : {};
-    allSettings[userId] = defaultSettings;
-    localStorage.setItem('reviewApp_businessSettings', JSON.stringify(allSettings));
-    
-    setUser({ id: userId, email, fullName, businessName, businessAccountId, createdAt: now });
-    setBusinessSettings(defaultSettings);
-    localStorage.setItem('reviewApp_user', JSON.stringify({ id: userId, email, fullName, businessName, businessAccountId, createdAt: now }));
-    
-    return true;
+      if (error) {
+        console.error('Signup error:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      return false;
+    }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setSession(null);
+    setProfile(null);
     setBusinessSettings(null);
-    localStorage.removeItem('reviewApp_user');
+    setReviews([]);
   };
 
   // Review functions
-  const addReview = (review: Omit<Review, 'id' | 'createdAt'>) => {
-    const newReview: Review = {
-      ...review,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString()
-    };
-    
-    const updatedReviews = [...reviews, newReview];
-    setReviews(updatedReviews);
-    localStorage.setItem('reviewApp_reviews', JSON.stringify(updatedReviews));
+  const addReview = async (review: Omit<Review, 'id' | 'created_at'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert([review])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding review:', error);
+        return;
+      }
+
+      setReviews(prev => [data, ...prev]);
+    } catch (error) {
+      console.error('Error adding review:', error);
+    }
   };
 
   const getReviewsByBusiness = (businessId: string) => {
-    return reviews.filter(review => review.businessId === businessId);
+    return reviews.filter(review => review.business_id === businessId);
   };
 
   // Business settings functions
-  const updateBusinessSettings = (settings: Partial<BusinessSettings>) => {
-    if (!user || !businessSettings) return;
-    
-    const updatedSettings = { ...businessSettings, ...settings };
-    setBusinessSettings(updatedSettings);
-    
-    const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-    const allSettings = savedSettings ? JSON.parse(savedSettings) : {};
-    allSettings[user.id] = updatedSettings;
-    localStorage.setItem('reviewApp_businessSettings', JSON.stringify(allSettings));
-  };
+  const updateBusinessSettings = async (settings: Partial<BusinessSettings>) => {
+    if (!businessSettings || !user) return;
 
-  const getBusinessByPath = (path: string): BusinessSettings | null => {
-    const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-    if (!savedSettings) return null;
-    
-    const allSettings = JSON.parse(savedSettings);
-    return Object.values(allSettings).find((settings: any) => 
-      settings.businessName.toLowerCase().replace(/\s+/g, '-') === path.toLowerCase()
-    ) as BusinessSettings || null;
-  };
-
-  const getBusinessByAccountId = (accountId: string): BusinessSettings | null => {
-    console.log('Looking for business with accountId:', accountId);
     try {
-      const savedUsers = localStorage.getItem('reviewApp_users');
-      if (!savedUsers) {
-        console.log('No saved users found');
-        return null;
+      const { error } = await supabase
+        .from('business_settings')
+        .update(settings)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating business settings:', error);
+        return;
       }
-      
-      const users = JSON.parse(savedUsers);
-      console.log('All users:', users);
-      
-      const userEntry = Object.values(users).find((user: any) => user.businessAccountId === accountId) as any;
-      console.log('Found user entry:', userEntry);
-      
-      if (!userEntry) {
-        console.log('No user found with businessAccountId:', accountId);
-        return null;
-      }
-      
-      const savedSettings = localStorage.getItem('reviewApp_businessSettings');
-      if (!savedSettings) {
-        console.log('No saved settings found');
-        return null;
-      }
-      
-      const allSettings = JSON.parse(savedSettings);
-      console.log('All settings:', allSettings);
-      console.log('Settings for user:', allSettings[userEntry.id]);
-      return allSettings[userEntry.id] || null;
+
+      const updatedSettings = { ...businessSettings, ...settings };
+      setBusinessSettings(updatedSettings);
     } catch (error) {
-      console.error('Error in getBusinessByAccountId:', error);
+      console.error('Error updating business settings:', error);
+    }
+  };
+
+  const getBusinessByPath = async (path: string): Promise<BusinessSettings | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('business_settings')
+        .select('*')
+        .eq('public_path', path)
+        .single();
+
+      if (error) {
+        console.error('Error getting business by path:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting business by path:', error);
+      return null;
+    }
+  };
+
+  const getBusinessByAccountId = async (accountId: string): Promise<BusinessSettings | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('business_settings')
+        .select('*')
+        .eq('user_id', accountId)
+        .single();
+
+      if (error) {
+        console.error('Error getting business by account ID:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting business by account ID:', error);
       return null;
     }
   };
 
   const changePassword = async (currentPassword: string, newPassword: string): Promise<boolean> => {
-    if (!user) return false;
-    
-    const savedUsers = localStorage.getItem('reviewApp_users');
-    const users = savedUsers ? JSON.parse(savedUsers) : {};
-    
-    const userData = users[user.email];
-    if (!userData || userData.password !== currentPassword) {
-      return false; // Current password is incorrect
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        console.error('Password change error:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Password change error:', error);
+      return false;
     }
-    
-    // Update password
-    userData.password = newPassword;
-    users[user.email] = userData;
-    localStorage.setItem('reviewApp_users', JSON.stringify(users));
-    
-    return true;
   };
 
   // Analytics functions
   const getAnalytics = () => {
     if (!user) return { totalReviews: 0, averageRating: 0, ratingDistribution: {}, recentReviews: [] };
     
-    const businessReviews = getReviewsByBusiness(user.id);
+    const businessReviews = getReviewsByBusiness(businessSettings?.id || '');
     const totalReviews = businessReviews.length;
     
     if (totalReviews === 0) {
@@ -323,7 +319,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     }, {} as Record<number, number>);
     
     const recentReviews = businessReviews
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 5);
     
     return {
@@ -338,6 +334,8 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     <ReviewContext.Provider
       value={{
         user,
+        session,
+        profile,
         login,
         signup,
         logout,

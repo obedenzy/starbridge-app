@@ -12,8 +12,8 @@ const Settings = () => {
   const { user, businessSettings, updateBusinessSettings } = useReview();
   const { toast } = useToast();
   
-  const [businessName, setBusinessName] = useState(businessSettings?.businessName || '');
-  const [email, setEmail] = useState(businessSettings?.email || '');
+  const [businessName, setBusinessName] = useState(businessSettings?.business_name || '');
+  const [email, setEmail] = useState(businessSettings?.contact_email || '');
 
   if (!user || !businessSettings) {
     return <Navigate to="/login" replace />;
@@ -21,8 +21,8 @@ const Settings = () => {
 
   const handleSave = () => {
     updateBusinessSettings({
-      businessName: businessName.trim(),
-      email: email.trim()
+      business_name: businessName.trim(),
+      contact_email: email.trim()
     });
     
     toast({
@@ -49,37 +49,41 @@ const Settings = () => {
               <span>Account Information</span>
             </CardTitle>
             <CardDescription>
-              View your account details and business account ID
+              Your account details and basic information.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Account Email</Label>
-                <Input
-                  value={user.email}
-                  readOnly
-                  className="bg-muted/50"
-                />
+                <Label>Email Address</Label>
+                <Input value={user.email} disabled className="bg-muted/50" />
               </div>
               <div className="space-y-2">
-                <Label>Business Account ID</Label>
-                <Input
-                  value={user.businessAccountId}
-                  readOnly
-                  className="bg-muted/50 font-mono text-xs"
-                />
+                <Label>Account ID</Label>
+                <div className="flex space-x-2">
+                  <Input value={user.id} disabled className="bg-muted/50 font-mono text-xs" />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => {
+                      navigator.clipboard.writeText(user.id);
+                      toast({ title: "Copied to clipboard" });
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Member Since</Label>
               <Input
-                value={new Date(user.createdAt).toLocaleDateString('en-US', {
+                value={new Date(user.created_at || '').toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'
                 })}
-                readOnly
+                disabled
                 className="bg-muted/50"
               />
             </div>
@@ -94,41 +98,43 @@ const Settings = () => {
               <span>Business Information</span>
             </CardTitle>
             <CardDescription>
-              Update your business details displayed to customers
+              Update your business details and contact information.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
-              <Input
-                id="businessName"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="Enter your business name"
-                className="h-12"
-              />
-              <p className="text-xs text-muted-foreground">
-                This name will be displayed on your review forms and public pages
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="businessName">Business Name</Label>
+                <Input
+                  id="businessName"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="Enter your business name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Contact Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="business@example.com"
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="email">Business Contact Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="contact@yourbusiness.com"
-                className="h-12"
-              />
-              <p className="text-xs text-muted-foreground">
-                This email may be shown to customers for follow-up communications
-              </p>
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSave}
+                className="bg-gradient-primary hover:opacity-90 text-white"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </Button>
             </div>
           </CardContent>
         </Card>
-
 
         {/* Account Security */}
         <Card className="bg-gradient-card backdrop-blur-sm border-border/50 shadow-card-hover">
@@ -138,30 +144,23 @@ const Settings = () => {
               <span>Account Security</span>
             </CardTitle>
             <CardDescription>
-              Manage your account security and access
+              Manage your account security and password settings.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-sm">
-                <strong>Password Management:</strong> To change your password or update security settings, 
-                please contact support or use the password reset feature on the login page.
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                For security reasons, password changes can be done through your profile page.
               </p>
+              <Button variant="outline" asChild>
+                <Link to="/profile">
+                  <Eye className="w-4 h-4 mr-2" />
+                  Go to Profile
+                </Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
-
-        {/* Save Button */}
-        <div className="flex justify-end">
-          <Button 
-            onClick={handleSave}
-            size="lg"
-            className="bg-gradient-primary hover:opacity-90 text-white shadow-glow"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save Changes
-          </Button>
-        </div>
       </div>
     </div>
   );
