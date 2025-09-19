@@ -21,11 +21,33 @@ import SuperAdminBusinesses from "./pages/SuperAdminBusinesses";
 import SuperAdminUsers from "./pages/SuperAdminUsers";
 import { SuperAdminSidebar } from "@/components/SuperAdminSidebar";
 import { useReview } from "@/contexts/ReviewContext";
+import { Navigate, useLocation } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
 const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
   const { userRole } = useReview();
+  const location = useLocation();
+  
+  // Redirect super admin users from regular routes to super admin routes
+  if (userRole === 'super_admin') {
+    if (location.pathname === '/dashboard') {
+      return <Navigate to="/super-admin/dashboard" replace />;
+    }
+    if (location.pathname === '/profile') {
+      return <Navigate to="/super-admin/profile" replace />;
+    }
+    if (location.pathname === '/settings') {
+      return <Navigate to="/super-admin/settings" replace />;
+    }
+  }
+  
+  // Redirect regular users from super admin routes to regular routes
+  if (userRole === 'business_user') {
+    if (location.pathname.startsWith('/super-admin/')) {
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
   
   return (
     <SidebarProvider>
