@@ -5,23 +5,7 @@ import { useReview } from "@/contexts/ReviewContext";
 import { Check, Crown, CreditCard } from "lucide-react";
 
 export function SubscriptionStatus() {
-  const reviewContext = useReview();
-  
-  if (!reviewContext) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Crown className="h-5 w-5" />
-            Subscription Status
-          </CardTitle>
-          <CardDescription>Loading...</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-  
-  const { subscriptionStatus, businessSettings, createCheckout } = reviewContext;
+  const { subscriptionStatus, businessSettings, createCheckout } = useReview();
 
   if (!subscriptionStatus) {
     return (
