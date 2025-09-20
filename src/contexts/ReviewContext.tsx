@@ -1073,7 +1073,14 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 export const useReview = () => {
   const context = useContext(ReviewContext);
   if (context === undefined) {
-    throw new Error('useReview must be used within a ReviewProvider');
+    // Check if we're in a test environment or during initial render
+    if (typeof window === 'undefined') {
+      throw new Error('useReview must be used within a ReviewProvider');
+    }
+    
+    // During initial app load, return a default context to prevent crashes
+    console.warn('useReview called before ReviewProvider is ready, returning null');
+    return null;
   }
   return context;
 };

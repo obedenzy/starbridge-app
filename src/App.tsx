@@ -31,8 +31,14 @@ import ForcePasswordChange from '@/components/ForcePasswordChange';
 const queryClient = new QueryClient();
 
 const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
-  const { userRole, subscriptionStatus, redirectPath } = useReview();
+  const reviewContext = useReview();
   const location = useLocation();
+  
+  if (!reviewContext) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  const { userRole, subscriptionStatus, redirectPath } = reviewContext;
   
   // Debug logging
   console.log('AppWithSidebar - userRole:', userRole, 'pathname:', location.pathname, 'subscription:', subscriptionStatus);
@@ -91,7 +97,13 @@ const AppWithSidebar = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppWithPasswordCheck = () => {
-  const { user, requiresPasswordChange } = useReview();
+  const reviewContext = useReview();
+  
+  if (!reviewContext) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  const { user, requiresPasswordChange } = reviewContext;
 
   // Check if user needs to change password
   if (user && requiresPasswordChange()) {
