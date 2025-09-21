@@ -79,7 +79,7 @@ export type Database = {
       }
       business_users: {
         Row: {
-          business_id: string
+          business_id: number
           created_at: string
           id: string
           invited_by: string | null
@@ -88,7 +88,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          business_id: string
+          business_id: number
           created_at?: string
           id?: string
           invited_by?: string | null
@@ -97,7 +97,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          business_id?: string
+          business_id?: number
           created_at?: string
           id?: string
           invited_by?: string | null
@@ -111,7 +111,7 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_settings"
-            referencedColumns: ["id"]
+            referencedColumns: ["business_id"]
           },
         ]
       }
@@ -164,7 +164,7 @@ export type Database = {
       }
       reviews: {
         Row: {
-          business_id: string
+          business_id: number
           comment: string | null
           created_at: string
           customer_email: string | null
@@ -174,7 +174,7 @@ export type Database = {
           subject: string | null
         }
         Insert: {
-          business_id: string
+          business_id: number
           comment?: string | null
           created_at?: string
           customer_email?: string | null
@@ -184,7 +184,7 @@ export type Database = {
           subject?: string | null
         }
         Update: {
-          business_id?: string
+          business_id?: number
           comment?: string | null
           created_at?: string
           customer_email?: string | null
@@ -199,7 +199,7 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "business_settings"
-            referencedColumns: ["id"]
+            referencedColumns: ["business_id"]
           },
         ]
       }
