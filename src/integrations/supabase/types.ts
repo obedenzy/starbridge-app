@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       business_settings: {
         Row: {
+          business_id: number
           business_name: string
           contact_email: string
           created_at: string
@@ -35,6 +36,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          business_id: number
           business_name: string
           contact_email: string
           created_at?: string
@@ -54,6 +56,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          business_id?: number
           business_name?: string
           contact_email?: string
           created_at?: string
@@ -114,36 +117,50 @@ export type Database = {
       }
       profiles: {
         Row: {
+          business_id: number | null
           business_name: string
           created_at: string
           email: string
           full_name: string
           id: string
           last_login: string | null
+          role: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          business_id?: number | null
           business_name: string
           created_at?: string
           email: string
           full_name: string
           id?: string
           last_login?: string | null
+          role?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          business_id?: number | null
           business_name?: string
           created_at?: string
           email?: string
           full_name?: string
           id?: string
           last_login?: string | null
+          role?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_settings"
+            referencedColumns: ["business_id"]
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -217,6 +234,14 @@ export type Database = {
     Functions: {
       assign_super_admin_role: {
         Args: { user_uuid: string }
+        Returns: string
+      }
+      generate_random_string: {
+        Args: { length: number }
+        Returns: string
+      }
+      generate_unique_10_digit_id: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_public_business_info: {
