@@ -32,6 +32,10 @@ const ReviewForm = () => {
     if (businessAccountId) {
       getBusinessByAccountId(businessAccountId).then(foundBusiness => {
         console.log('Found business:', foundBusiness);
+        if (!foundBusiness) {
+          console.log('Business not found for ID:', businessAccountId);
+          console.log('This might be due to an incorrect business ID in the URL');
+        }
         setBusiness(foundBusiness);
       });
     }
@@ -161,8 +165,11 @@ const ReviewForm = () => {
             <p className="text-muted-foreground mb-4">
               The review form you're looking for doesn't exist or has been removed.
             </p>
+            <p className="text-xs text-muted-foreground mb-2">
+              Requested Business ID: {businessAccountId}
+            </p>
             <p className="text-xs text-muted-foreground">
-              Business ID: {businessAccountId}
+              Please check the URL and ensure you have the correct business ID.
             </p>
           </CardContent>
         </Card>
