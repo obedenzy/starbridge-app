@@ -177,13 +177,53 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Load business settings for business users
-      const { data: businessData } = await supabase
+      const { data: businessData, error: businessError } = await supabase
         .from('business_settings')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
-      setBusinessSettings(businessData);
+      console.log('Business settings loaded:', { businessData, businessError });
+      
+      // If no business settings exist, try to create them
+      if (!businessData && !businessError) {
+        console.log('No business settings found, attempting to create...');
+        try {
+          // Generate a unique business ID
+          const { data: businessIdData, error: businessIdError } = await supabase
+            .rpc('generate_unique_10_digit_id');
+            
+          if (businessIdError) {
+            console.error('Failed to generate business ID:', businessIdError);
+            return;
+          }
+          
+          const businessName = profileData?.business_name || 'My Business';
+          const { data: newBusinessData, error: createError } = await supabase
+            .from('business_settings')
+            .insert({
+              user_id: userId,
+              business_id: parseInt(businessIdData),
+              business_name: businessName,
+              contact_email: userData?.user?.email || '',
+              public_path: `business-${businessIdData}`,
+              status: 'active'
+            })
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error('Failed to create business settings:', createError);
+          } else {
+            console.log('Business settings created successfully:', newBusinessData);
+            setBusinessSettings(newBusinessData);
+          }
+        } catch (createError) {
+          console.error('Error creating business settings:', createError);
+        }
+      } else {
+        setBusinessSettings(businessData);
+      }
 
       // Load reviews for this business
       if (businessData) {
