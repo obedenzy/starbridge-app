@@ -502,7 +502,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         .from('business_users')
         .select(`
           *,
-          profiles!business_users_user_id_fkey (
+          profiles (
             full_name,
             email
           )

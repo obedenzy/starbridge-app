@@ -19,6 +19,17 @@ serve(async (req) => {
 
     const { email, fullName, role, businessId, tempPassword } = await req.json()
 
+    // Get business settings to get business name
+    const { data: businessData, error: businessError } = await supabaseClient
+      .from('business_settings')
+      .select('business_name')
+      .eq('business_id', businessId)
+      .single()
+
+    if (businessError) {
+      throw new Error(`Failed to get business settings: ${businessError.message}`)
+    }
+
     // Create the user account
     const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
       email,
@@ -26,7 +37,8 @@ serve(async (req) => {
       email_confirm: true,
       user_metadata: {
         full_name: fullName,
-        requires_password_change: true
+        requires_password_change: true,
+        business_name: businessData.business_name
       }
     })
 
@@ -36,6 +48,33 @@ serve(async (req) => {
 
     if (!authData.user) {
       throw new Error('Failed to create user account')
+    }
+
+    // Update the user's profile with the correct business_id and business_name
+    const { error: profileError } = await supabaseClient
+      .from('profiles')
+      .update({
+        business_id: businessId,
+        business_name: businessData.business_name
+      })
+      .eq('user_id', authData.user.id)
+
+    if (profileError) {
+      console.error('Failed to update profile:', profileError)
+      // Don't throw here as the profile might be updated by trigger
+    }
+
+    // Add user to user_roles table with the specified role
+    const { error: userRoleError } = await supabaseClient
+      .from('user_roles')
+      .insert({
+        user_id: authData.user.id,
+        role: role
+      })
+
+    if (userRoleError) {
+      console.error('Failed to add user role:', userRoleError)
+      // Continue as this might already exist
     }
 
     // Add user to business_users table
