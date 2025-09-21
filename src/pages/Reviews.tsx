@@ -56,6 +56,8 @@ const Reviews = () => {
   const [googleReviewUrl, setGoogleReviewUrl] = useState('');
   const [thankYouMessage, setThankYouMessage] = useState('Thank you for your feedback! We appreciate your time.');
 
+  // Handle authentication check
+  // Handle authentication check
   if (!user) {
     return <Navigate to="/login" replace />;
   }
