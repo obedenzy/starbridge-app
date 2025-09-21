@@ -376,7 +376,7 @@ const Profile = () => {
                 </Button>
 
                 <Button variant="outline" asChild className="justify-start h-auto p-4">
-                  <Link to={`/review?businessAccountId=${user.id}`} target="_blank">
+                  <Link to={`/review?businessAccountId=${businessSettings?.business_id}`} target="_blank">
                     <div className="flex flex-col items-start space-y-1">
                       <span className="font-medium">Preview Review Form</span>
                       <span className="text-xs text-muted-foreground">See how customers view your form</span>
@@ -385,30 +385,6 @@ const Profile = () => {
                 </Button>
               </div>
 
-              {/* Shareable Review Form URL */}
-              <div className="pt-4 border-t border-border/50">
-                <Label className="text-sm font-medium mb-2 block">Public Review Form URL</Label>
-                <div className="flex space-x-2">
-                  <Input
-                    value={`${window.location.origin}/review?businessAccountId=${user.id}`}
-                    disabled
-                    className="bg-muted/50 font-mono text-xs"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => copyToClipboard(
-                      `${window.location.origin}/review?businessAccountId=${user.id}`,
-                      'Review form URL'
-                    )}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Share this URL with customers to collect reviews
-                </p>
-              </div>
             </CardContent>
           </Card>
         </div>

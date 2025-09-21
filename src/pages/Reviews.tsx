@@ -99,8 +99,8 @@ const Reviews = () => {
     });
   };
 
-  const previewUrl = businessSettings?.public_path 
-    ? `${window.location.origin}/review?business=${businessSettings.public_path}`
+  const previewUrl = businessSettings?.business_id 
+    ? `${window.location.origin}/review?businessAccountId=${businessSettings.business_id}`
     : '';
 
   // Filter and sort reviews
@@ -192,7 +192,7 @@ const Reviews = () => {
             Export CSV
           </Button>
           <Button asChild>
-            <Link to={`/review?businessAccountId=${user?.id}`} target="_blank">
+            <Link to={`/review?businessAccountId=${businessSettings?.business_id}`} target="_blank">
               <Eye className="w-4 h-4 mr-2" />
               Preview Form
             </Link>
@@ -339,7 +339,7 @@ const Reviews = () => {
                     }
                   </p>
                   <Button asChild>
-                    <Link to={`/review?businessAccountId=${user?.id}`} target="_blank">
+                    <Link to={`/review?businessAccountId=${businessSettings?.business_id}`} target="_blank">
                       <Eye className="w-4 h-4 mr-2" />
                       Preview Review Form
                     </Link>
