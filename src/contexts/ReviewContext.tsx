@@ -710,8 +710,17 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (session?.user) {
           // Defer loading with setTimeout
-          setTimeout(() => {
-            loadUserData(session.user.id);
+          setTimeout(async () => {
+            await loadUserData(session.user.id);
+            // Also trigger subscription check after user data loads
+            setTimeout(async () => {
+              try {
+                console.log('Subscription check after auth state change...');
+                await checkSubscription();
+              } catch (error) {
+                console.error('Error checking subscription after auth change:', error);
+              }
+            }, 100);
           }, 0);
         } else {
           setProfile(null);
@@ -739,7 +748,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
           } catch (error) {
             console.error('Error checking subscription on page load:', error);
           }
-        }, 500); // Small delay to ensure user data is loaded first
+        }, 100); // Shorter delay for faster loading
       }
     });
 
