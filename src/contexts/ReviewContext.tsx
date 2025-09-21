@@ -278,6 +278,9 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
             }
           }
         }
+      } else {
+        // For super admins, set a default subscription status
+        setSubscriptionStatus({ subscribed: true, product_id: null, subscription_end: null });
       }
     } catch (error) {
       console.error('Error loading user data:', error);
