@@ -65,7 +65,7 @@ const Reviews = () => {
       if (!businessSettings) return;
       
       try {
-        const data = await getReviewsByBusiness(businessSettings.id);
+        const data = await getReviewsByBusiness(businessSettings.business_id);
         setReviews(data);
       } catch (error) {
         console.error('Error loading reviews:', error);

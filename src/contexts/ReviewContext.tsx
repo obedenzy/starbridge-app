@@ -11,12 +11,13 @@ export interface Review {
   customer_email?: string;
   subject: string;
   comment: string;
-  business_id: string;
+  business_id: number;
   created_at: string;
 }
 
 export interface BusinessSettings {
   id: string;
+  business_id: number;
   user_id: string;
   business_name: string;
   contact_email: string;
@@ -58,7 +59,7 @@ interface ReviewContextType {
   updateBusinessSettings: (settings: Partial<BusinessSettings>) => Promise<void>;
   getBusinessByPath: (path: string) => Promise<BusinessSettings | null>;
   getBusinessByAccountId: (accountId: string) => Promise<BusinessSettings | null>;
-  getReviewsByBusiness: (businessId: string) => Promise<Review[]>;
+  getReviewsByBusiness: (businessId: number) => Promise<Review[]>;
   changePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
   checkSubscription: () => Promise<{ subscribed: boolean; product_id?: string | null; subscription_end?: string | null } | null>;
   createCheckout: () => Promise<void>;
@@ -230,7 +231,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: reviewsData } = await supabase
           .from('reviews')
           .select('*')
-          .eq('business_id', businessData.id)
+          .eq('business_id', businessData.business_id)
           .order('created_at', { ascending: false });
         
         setReviews(reviewsData || []);
@@ -503,7 +504,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
             email
           )
         `)
-        .eq('business_id', businessSettings.id);
+        .eq('business_id', businessSettings.business_id);
       
       if (businessUsersError) throw businessUsersError;
 
@@ -852,7 +853,9 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getBusinessByPath = async (path: string): Promise<BusinessSettings | null> => {
     const { data, error } = await supabase
-      .rpc('get_public_business_info', { business_path: path })
+      .from('business_settings')
+      .select('id, business_id, business_name, public_path, status, created_at')
+      .eq('public_path', path)
       .single();
 
     if (error) return null;
@@ -861,6 +864,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     // and other sensitive fields as null/undefined for security
     return {
       id: data.id,
+      business_id: data.business_id,
       business_name: data.business_name,
       public_path: data.public_path,
       status: data.status,
@@ -890,7 +894,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     return data;
   };
 
-  const getReviewsByBusiness = async (businessId: string): Promise<Review[]> => {
+  const getReviewsByBusiness = async (businessId: number): Promise<Review[]> => {
     const { data, error } = await supabase
       .from('reviews')
       .select('*')
@@ -918,7 +922,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       };
     }
 
-    const businessReviews = await getReviewsByBusiness(businessSettings.id);
+    const businessReviews = await getReviewsByBusiness(businessSettings.business_id);
     const totalReviews = businessReviews.length;
     
     if (totalReviews === 0) {
