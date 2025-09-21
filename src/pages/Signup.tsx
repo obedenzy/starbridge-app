@@ -48,7 +48,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await signup(email, password, businessName);
+      const { error } = await signup(email, password, businessName, fullName);
       if (!error) {
         toast({
           title: "Account created!",

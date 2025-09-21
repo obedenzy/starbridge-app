@@ -255,9 +255,7 @@ export type Database = {
         }[]
       }
       get_user_business_role: {
-        Args:
-          | { business_id_param: number; user_id_param: string }
-          | { business_id_param: string; user_id_param: string }
+        Args: { business_id_param: number; user_id_param: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_user_role: {
@@ -282,37 +280,23 @@ export type Database = {
         Returns: boolean
       }
       invite_user_to_business: {
-        Args:
-          | {
-              business_id_param: number
-              email_param: string
-              role_param?: Database["public"]["Enums"]["app_role"]
-            }
-          | {
-              business_id_param: string
-              email_param: string
-              role_param?: Database["public"]["Enums"]["app_role"]
-            }
+        Args: {
+          business_id_param: number
+          email_param: string
+          role_param?: Database["public"]["Enums"]["app_role"]
+        }
         Returns: string
       }
       remove_user_from_business: {
-        Args:
-          | { business_id_param: number; user_id_param: string }
-          | { business_id_param: string; user_id_param: string }
+        Args: { business_id_param: number; user_id_param: string }
         Returns: undefined
       }
       update_business_user_role: {
-        Args:
-          | {
-              business_id_param: number
-              new_role_param: Database["public"]["Enums"]["app_role"]
-              user_id_param: string
-            }
-          | {
-              business_id_param: string
-              new_role_param: Database["public"]["Enums"]["app_role"]
-              user_id_param: string
-            }
+        Args: {
+          business_id_param: number
+          new_role_param: Database["public"]["Enums"]["app_role"]
+          user_id_param: string
+        }
         Returns: undefined
       }
     }

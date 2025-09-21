@@ -53,7 +53,7 @@ interface ReviewContextType {
   redirectPath: string | null;
   supabase: typeof supabase;
   login: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signup: (email: string, password: string, businessName: string) => Promise<{ error: AuthError | null }>;
+  signup: (email: string, password: string, businessName: string, fullName?: string) => Promise<{ error: AuthError | null }>;
   logout: () => Promise<void>;
   addReview: (review: Omit<Review, 'id' | 'created_at'>) => Promise<{ success: boolean; error?: string }>;
   updateBusinessSettings: (settings: Partial<BusinessSettings>) => Promise<void>;
@@ -479,7 +479,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase.rpc('get_user_business_role', {
         user_id_param: user.id,
-        business_id_param: businessSettings.id
+        business_id_param: businessSettings.business_id // Use business_id (BIGINT) not id (UUID)
       });
       
       if (error) throw error;
@@ -754,7 +754,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     return { error };
   };
 
-  const signup = async (email: string, password: string, businessName: string) => {
+  const signup = async (email: string, password: string, businessName: string, fullName: string = '') => {
     const redirectUrl = `${window.location.origin}/`;
     
     const { data, error } = await supabase.auth.signUp({
@@ -764,7 +764,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
         emailRedirectTo: redirectUrl,
         data: {
           business_name: businessName,
-          full_name: ''
+          full_name: fullName
         }
       }
     });
