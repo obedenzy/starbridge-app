@@ -866,11 +866,11 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     } as BusinessSettings;
   };
 
-  const getBusinessByAccountId = async (accountId: string): Promise<BusinessSettings | null> => {
+  const getBusinessByAccountId = async (businessId: string): Promise<BusinessSettings | null> => {
     const { data, error } = await supabase
       .from('business_settings')
       .select('*')
-      .eq('user_id', accountId)
+      .eq('business_id', parseInt(businessId))
       .single();
 
     if (error) return null;
