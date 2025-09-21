@@ -497,7 +497,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     if (!businessSettings) return [];
     
     try {
-      // Get business users
+      // Get all business users for this business (including the owner)
       const { data: businessUsers, error: businessUsersError } = await supabase
         .from('business_users')
         .select(`
@@ -511,31 +511,11 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (businessUsersError) throw businessUsersError;
 
-      // Get business owner info
-      const { data: ownerProfile, error: ownerError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', businessSettings.user_id)
-        .single();
-      
-      if (ownerError && ownerError.code !== 'PGRST116') throw ownerError;
-
-      // Combine owner and business users
-      const allUsers = [
-        ...(ownerProfile ? [{
-          id: businessSettings.user_id,
-          business_id: businessSettings.id,
-          user_id: businessSettings.user_id,
-          role: 'business_admin' as const,
-          created_at: new Date().toISOString(),
-          profiles: ownerProfile,
-          is_owner: true
-        }] : []),
-        ...(businessUsers || []).map(user => ({ 
-          ...user, 
-          is_owner: false 
-        }))
-      ];
+      // Mark the business owner
+      const allUsers = (businessUsers || []).map(user => ({
+        ...user,
+        is_owner: user.user_id === businessSettings.user_id
+      }));
 
       return allUsers;
     } catch (error) {
@@ -556,15 +536,15 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     // Generate temporary password
     const tempPassword = Math.random().toString(36).slice(-10).toUpperCase();
 
-    const { data, error } = await supabase.functions.invoke('create-business-user', {
-      body: {
-        email,
-        fullName,
-        role,
-        businessId: businessSettings.id,
-        tempPassword
-      }
-    });
+      const { data, error } = await supabase.functions.invoke('create-business-user', {
+        body: {
+          email,
+          fullName,
+          role,
+          businessId: businessSettings.business_id, // Use business_id instead of id
+          tempPassword
+        }
+      });
 
     if (error) {
       console.error('Error creating business user:', error);
@@ -618,7 +598,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       const { error } = await supabase.rpc('remove_user_from_business', {
-        business_id_param: businessSettings.id,
+        business_id_param: businessSettings.business_id,
         user_id_param: userId
       });
       
@@ -644,7 +624,7 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       const { error } = await supabase.rpc('update_business_user_role', {
-        business_id_param: businessSettings.id,
+        business_id_param: businessSettings.business_id,
         user_id_param: userId,
         new_role_param: role
       });
