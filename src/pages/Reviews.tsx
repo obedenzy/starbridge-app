@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StarRating } from '@/components/StarRating';
 import { QRCodeGenerator } from '@/components/QRCodeGenerator';
 import { useToast } from '@/hooks/use-toast';
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -25,10 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  MessageSquare, 
-  Star, 
-  Search, 
+import {
+  MessageSquare,
+  Star,
+  Search,
   Filter,
   Download,
   Eye,
@@ -37,10 +37,21 @@ import {
   Settings,
   Save,
   Link as LinkIcon,
-  QrCode
+  QrCode,
+  User as UserIcon, // Alias User to avoid conflict with `user` prop
+  Mail,
+  Star as StarIconOutline
 } from 'lucide-react';
-import { useReview } from '@/contexts/ReviewContext';
-import { Review } from '@/contexts/ReviewContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose
+} from '@/components/ui/dialog';
+import { useReview, Review } from '@/contexts/ReviewContext';
 
 const Reviews = () => {
   const { user, businessSettings, getReviewsByBusiness, updateBusinessSettings } = useReview();
@@ -56,7 +67,10 @@ const Reviews = () => {
   const [googleReviewUrl, setGoogleReviewUrl] = useState('');
   const [thankYouMessage, setThankYouMessage] = useState('Thank you for your feedback! We appreciate your time.');
 
-  // Handle authentication check
+  // State for review details modal
+  const [showReviewDetailsModal, setShowReviewDetailsModal] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+
   // Handle authentication check
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -404,8 +418,8 @@ const Reviews = () => {
                               variant="outline" 
                               size="sm"
                               onClick={() => {
-                                // TODO: Implement review details modal
-                                console.log('View review details:', review.id);
+                                setSelectedReview(review);
+                                setShowReviewDetailsModal(true);
                               }}
                             >
                               <Eye className="w-3 h-3" />
@@ -547,6 +561,60 @@ const Reviews = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Review Details Modal */}
+      <Dialog open={showReviewDetailsModal} onOpenChange={setShowReviewDetailsModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Review Details</DialogTitle>
+            <DialogDescription>
+              Full details of the selected customer review.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedReview && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Customer Name</Label>
+                <span className="col-span-3 font-medium">{selectedReview.customer_name}</span>
+              </div>
+              {selectedReview.customer_email && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label className="text-right">Email</Label>
+                  <span className="col-span-3 text-muted-foreground">{selectedReview.customer_email}</span>
+                </div>
+              )}
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Rating</Label>
+                <div className="col-span-3 flex items-center gap-2">
+                  <StarRating rating={selectedReview.rating} readonly size="sm" />
+                  <Badge>{selectedReview.rating}</Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Subject</Label>
+                <span className="col-span-3">{selectedReview.subject || 'N/A'}</span>
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label className="text-right">Comment</Label>
+                <span className="col-span-3 text-sm text-muted-foreground">{selectedReview.comment || 'No comment provided.'}</span>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Date</Label>
+                <span className="col-span-3 text-sm text-muted-foreground">
+                  {new Date(selectedReview.created_at).toLocaleDateString()} {new Date(selectedReview.created_at).toLocaleTimeString()}
+                </span>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">
+                Close
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

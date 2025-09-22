@@ -6,12 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { useReview } from '@/contexts/ReviewContext';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Crown, 
-  CreditCard, 
-  RefreshCw, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  Crown,
+  CreditCard,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
   Target,
   Building,
   Receipt,
@@ -20,12 +20,12 @@ import {
 } from 'lucide-react';
 
 const Billing = () => {
-  const { 
-    user, 
-    businessSettings, 
-    subscriptionStatus, 
-    userRole, 
-    createCheckout, 
+  const {
+    user,
+    businessSettings,
+    subscriptionStatus,
+    userRole,
+    createCheckout,
     openCustomerPortal,
     refreshSubscriptionStatus,
     getInvoices
@@ -33,11 +33,13 @@ const Billing = () => {
   const { toast } = useToast();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const invoicesPerPage = 5;
 
   // Auto-refresh subscription status every 2 minutes
   useEffect(() => {
     if (!user) return;
-    
+
     const refreshInterval = setInterval(() => {
       console.log('Auto-refreshing subscription status (Billing page)...');
       refreshSubscriptionStatus();
@@ -80,7 +82,13 @@ const Billing = () => {
     await refreshSubscriptionStatus();
   };
 
+  // Pagination logic
+  const indexOfLastInvoice = currentPage * invoicesPerPage;
+  const indexOfFirstInvoice = indexOfLastInvoice - invoicesPerPage;
+  const currentInvoices = invoices.slice(indexOfFirstInvoice, indexOfLastInvoice);
+  const totalPages = Math.ceil(invoices.length / invoicesPerPage);
 
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
   return (
     <div className="p-6 space-y-6">
@@ -100,8 +108,8 @@ const Billing = () => {
               Current Plan
             </CardTitle>
             <CardDescription>
-              {subscriptionStatus?.subscribed 
-                ? "Your business account is active" 
+              {subscriptionStatus?.subscribed
+                ? "Your business account is active"
                 : "Your business account needs activation"
               }
             </CardDescription>
@@ -117,11 +125,11 @@ const Billing = () => {
                 )}
               </Badge>
             </div>
-            
+
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Price</span>
             <span className="text-sm font-semibold">
-              {businessSettings?.custom_subscription_amount 
+              {businessSettings?.custom_subscription_amount
                 ? `$${(businessSettings.custom_subscription_amount / 100).toFixed(2)}/month`
                 : '$250/month'
               }
@@ -153,16 +161,16 @@ const Billing = () => {
           <CardContent className="space-y-3">
             {subscriptionStatus?.subscribed ? (
               <>
-                <Button 
-                  onClick={openCustomerPortal} 
+                <Button
+                  onClick={openCustomerPortal}
                   className="w-full bg-gradient-primary hover:opacity-90 text-white"
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Manage Payment & Cancel
                 </Button>
-                <Button 
-                  onClick={handleRefreshSubscription} 
-                  variant="outline" 
+                <Button
+                  onClick={handleRefreshSubscription}
+                  variant="outline"
                   className="w-full"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
@@ -171,16 +179,16 @@ const Billing = () => {
               </>
             ) : (
               <>
-                <Button 
-                  onClick={createCheckout} 
+                <Button
+                  onClick={createCheckout}
                   className="w-full bg-gradient-primary hover:opacity-90 text-white"
                 >
                   <Crown className="h-4 w-4 mr-2" />
                   Subscribe to Business Pro
                 </Button>
-                <Button 
-                  onClick={handleRefreshSubscription} 
-                  variant="outline" 
+                <Button
+                  onClick={handleRefreshSubscription}
+                  variant="outline"
                   className="w-full"
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
@@ -258,7 +266,7 @@ const Billing = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {invoices.map((invoice) => (
+                {currentInvoices.map((invoice) => (
                   <div key={invoice.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg bg-card/50">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
@@ -301,6 +309,29 @@ const Billing = () => {
                     </div>
                   </div>
                 ))}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center space-x-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => paginate(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => paginate(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
@@ -338,7 +369,7 @@ const Billing = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground">Account ID</label>
-              <p className="text-foreground font-mono text-xs">{businessSettings?.id || 'Not available'}</p>
+              <p className="text-foreground font-mono text-xs">{businessSettings?.business_id || 'Not available'}</p>
             </div>
           </div>
         </CardContent>

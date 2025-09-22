@@ -61,13 +61,21 @@ const Settings = () => {
               <div className="space-y-2">
                 <Label>Account ID</Label>
                 <div className="flex space-x-2">
-                  <Input value={user.id} disabled className="bg-muted/50 font-mono text-xs" />
+                  <Input 
+                    value={businessSettings?.business_id?.toString() || 'Not available'} 
+                    disabled 
+                    className="bg-muted/50 font-mono text-xs"
+                  />
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={() => {
-                      navigator.clipboard.writeText(user.id);
-                      toast({ title: "Copied to clipboard" });
+                      if (businessSettings?.business_id) {
+                        navigator.clipboard.writeText(businessSettings.business_id.toString());
+                        toast({ title: "Copied to clipboard" });
+                      } else {
+                        toast({ title: "Account ID not available", variant: "destructive" });
+                      }
                     }}
                   >
                     <Copy className="w-4 h-4" />

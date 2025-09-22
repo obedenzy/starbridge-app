@@ -346,6 +346,26 @@ const Profile = () => {
                     })}
                   </p>
                 </div>
+
+                {businessSettings?.business_id && (
+                  <div className="p-4 border border-border/50 rounded-lg bg-card/50">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Copy className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">Account ID</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-foreground font-mono text-xs break-all">{businessSettings.business_id}</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto px-2 py-1"
+                        onClick={() => copyToClipboard(businessSettings.business_id.toString(), 'Account ID')}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

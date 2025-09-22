@@ -80,7 +80,7 @@ const ReviewForm = () => {
         customer_email: email,
         subject,
         comment,
-        business_id: business.id
+        business_id: business.business_id // Corrected from business.id to business.business_id
       });
 
       if (result.success) {
@@ -89,7 +89,7 @@ const ReviewForm = () => {
           const { error: emailError } = await supabase.functions.invoke('send-review-notification', {
             body: {
               // reviewId: result.data?.id,
-              businessId: business.id,
+              businessId: business.business_id, // Corrected from business.id to business.business_id
               customerName: name,
               customerEmail: email,
               rating,
