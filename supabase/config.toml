@@ -2,3 +2,6 @@ project_id = "jkjcssajwfulkthhritq"
 
 [functions.send-user-credentials]
 verify_jwt = false
+
+[functions.send-review-notification]
+verify_jwt = false

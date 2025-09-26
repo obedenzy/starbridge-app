@@ -813,14 +813,14 @@ export const ReviewProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       // Call edge function to send notifications
-      try {
-        await supabase.functions.invoke('send-review-notification', {
-          body: { review: data }
-        });
-      } catch (notificationError) {
-        console.error('Error sending notification:', notificationError);
-        // Don't fail the review creation if notification fails
-      }
+      // try {
+      //   await supabase.functions.invoke('send-review-notification', {
+      //     body: { review: data }
+      //   });
+      // } catch (notificationError) {
+      //   console.error('Error sending notification:', notificationError);
+      //   // Don't fail the review creation if notification fails
+      // }
 
       setReviews(prev => [data, ...prev]);
       return { success: true };

@@ -60,13 +60,16 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('Business data retrieved:', businessData);
 
     // Create nodemailer transporter
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: Deno.env.get('SMTP_HOST'),
-      port: parseInt(Deno.env.get('SMTP_PORT') || '587'),
-      secure: false, // true for 465, false for other ports
+      port: parseInt(Deno.env.get('SMTP_PORT') || '587', 10),
+      secure: Deno.env.get('SMTP_SECURE') === 'true', // true for 465, false for other ports
       auth: {
         user: Deno.env.get('SMTP_USER'),
         pass: Deno.env.get('SMTP_PASSWORD'),
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
 
@@ -74,6 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
     const businessName = businessData.business_name;
     const ownerEmail = businessData.profiles.email;
     const ownerName = businessData.profiles.full_name;
+    const businessContactEmail = businessData.contact_email;
 
     // Email to customer (confirmation)
     const customerEmailContent = {
@@ -99,15 +103,21 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     };
 
+    // Prepare list of recipients for the business notification
+    const businessRecipients = [ownerEmail, businessContactEmail].filter(email => email);
+    // Remove duplicates
+    const uniqueBusinessRecipients = [...new Set(businessRecipients)];
+
+
     // Email to business owner (notification)
     const businessOwnerEmailContent = {
       from: `"Review System" <${Deno.env.get('SMTP_USER')}>`,
-      to: ownerEmail,
+      to: uniqueBusinessRecipients.join(', '),
       subject: `New ${rating}-star review received for ${businessName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #333;">New Review Received!</h2>
-          <p>Hi ${ownerName},</p>
+          <p>Hi ${ownerName || businessName},</p>
           <p>You've received a new review for <strong>${businessName}</strong>:</p>
           
           <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -131,21 +141,36 @@ const handler = async (req: Request): Promise<Response> => {
     const customerEmailResult = await transporter.sendMail(customerEmailContent);
     console.log('Customer email sent:', customerEmailResult.messageId);
 
-    console.log('Sending business owner notification email...');
-    const businessEmailResult = await transporter.sendMail(businessOwnerEmailContent);
-    console.log('Business owner email sent:', businessEmailResult.messageId);
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      customerEmailId: customerEmailResult.messageId,
-      businessEmailId: businessEmailResult.messageId 
-    }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        ...corsHeaders,
-      },
-    });
+    if (uniqueBusinessRecipients.length > 0) {
+        console.log(`Sending business notification email to: ${uniqueBusinessRecipients.join(', ')}...`);
+        const businessEmailResult = await transporter.sendMail(businessOwnerEmailContent);
+        console.log('Business owner email sent:', businessEmailResult.messageId);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          customerEmailId: customerEmailResult.messageId,
+          businessEmailId: businessEmailResult.messageId 
+        }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
+    } else {
+        console.log('No business recipients to send notification to.');
+        return new Response(JSON.stringify({ 
+          success: true, 
+          customerEmailId: customerEmailResult.messageId,
+          businessEmailId: null,
+          message: 'Customer email sent, but no business recipients were found.'
+        }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders,
+          },
+        });
+    }
 
   } catch (error: any) {
     console.error('Error in send-review-notification function:', error);

@@ -84,12 +84,12 @@ const ReviewForm = () => {
       });
 
       if (result.success) {
-        // Send email notifications
+        // Send email notifications via Supabase Edge Function
         try {
-          const { error: emailError } = await supabase.functions.invoke('send-review-notification', {
+          const { data, error: emailError } = await supabase.functions.invoke('send-review-notification', {
             body: {
-              // reviewId: result.data?.id,
-              businessId: business.business_id, // Corrected from business.id to business.business_id
+              reviewId: result.data?.id,
+              businessId: business.business_id,
               customerName: name,
               customerEmail: email,
               rating,
@@ -99,10 +99,12 @@ const ReviewForm = () => {
           });
 
           if (emailError) {
-            console.error('Error sending email notifications:', emailError);
+            console.error('Error sending email notifications via Edge Function:', emailError);
+          } else {
+            console.log('Email notifications sent successfully via Edge Function:', data);
           }
         } catch (emailError) {
-          console.error('Error invoking email function:', emailError);
+          console.error('Error invoking email Edge Function:', emailError);
         }
       }
 
